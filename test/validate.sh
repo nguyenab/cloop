@@ -7,16 +7,22 @@ fail=0
 pass(){ printf 'PASS  %s\n' "$1"; }
 bad(){ printf 'FAIL  %s\n' "$1"; fail=1; }
 
-# 1. Marketplace manifest validates (authoritative). Co-located marketplace.json means the
-#    plugin's commands/skills are checked by our own lints below, not by this call.
+# 1. Validate BOTH manifests on their own paths. A co-located marketplace.json makes
+#    `claude plugin validate ./` check only the marketplace, so we validate each explicitly:
+#    marketplace.json for the marketplace, plugin.json for the plugin + its components.
 if command -v claude >/dev/null 2>&1; then
   if claude plugin validate ./.claude-plugin/marketplace.json --strict >/dev/null 2>&1; then
     pass "claude plugin validate marketplace --strict"
   else
     bad "claude plugin validate marketplace --strict"
   fi
+  if claude plugin validate ./.claude-plugin/plugin.json --strict >/dev/null 2>&1; then
+    pass "claude plugin validate plugin --strict"
+  else
+    bad "claude plugin validate plugin --strict"
+  fi
 else
-  printf 'SKIP  claude CLI not found (marketplace validate)\n'
+  printf 'SKIP  claude CLI not found (manifest validate)\n'
 fi
 
 # 2. All JSON (manifests + schemas) is syntactically valid
