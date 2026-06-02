@@ -9,7 +9,7 @@ allowed-tools: ["Read", "Glob", "Bash", "CronList"]
 
 Optional slug filter: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and produce the **Morning report** for each
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and produce the **Morning report** for each
 `.claude/cloop/state/*.state.json` (or the given slug): one scannable line per loop (status,
 iter N/max, commit count via `git log --oneline <armed_at_sha>..HEAD`, last ADR title, expires in
 Xd). Cross-check `CronList` + `.claude/scheduled_tasks.json`; if a loop claims running but its job

@@ -1,6 +1,7 @@
 ---
-name: cloop
-description: C Loop engine — runs structured, self-documenting continuous loops on top of Claude Code's /loop (cron). Use when arming, iterating, inspecting, stopping, or repairing a cloop. Defines the iteration lifecycle, state/ADR/commit specs, durable cron arming, safety rails, and diagnostics. Read by the /cloop-* commands.
+name: cloop-engine
+description: C Loop engine. Shared logic that the /cloop-* commands read by path, covering the iteration lifecycle, state and ADR and commit specs, durable cron arming, safety rails, and diagnostics. Not a user command and not auto-invoked.
+disable-model-invocation: true
 ---
 
 # C Loop Engine

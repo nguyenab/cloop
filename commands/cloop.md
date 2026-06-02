@@ -9,8 +9,8 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Web
 
 Optional goal hint: **$ARGUMENTS**
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md`, run the interview in
-   `${CLAUDE_PLUGIN_ROOT}/skills/cloop/references/interview.md`, write the plan from
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`, run the interview in
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md`, write the plan from
    `plan-template.md`.
 2. Then ask (via `AskUserQuestion`) whether to start now.
    - Yes → follow **"Arming a durable cron loop"** (estimate+confirm, branch, durable CronCreate,

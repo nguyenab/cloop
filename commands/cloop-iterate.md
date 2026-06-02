@@ -11,7 +11,7 @@ disallowed-tools: ["AskUserQuestion", "EnterPlanMode", "ExitPlanMode"]
 
 Slug: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and follow its **Iteration lifecycle** section
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow its **Iteration lifecycle** section
 for the slug above. Run EXACTLY ONE iteration, then stop — do NOT loop internally; the cron
 schedule fires the next one.
 

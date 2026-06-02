@@ -68,24 +68,24 @@ fi
 keys="slug status fires iteration cron_job_id engine interval branch armed_at_sha durable created_at expires_at rearm_after last_adr last_commit consecutive_no_progress session_marker"
 kfail=0
 for k in $keys; do
-  if grep -q "\"$k\"" skills/cloop/SKILL.md && grep -q "\"$k\"" test/schemas/state.schema.json; then :; else
+  if grep -q "\"$k\"" skills/cloop-engine/SKILL.md && grep -q "\"$k\"" test/schemas/state.schema.json; then :; else
     bad "state key missing in SKILL.md or schema: $k"; kfail=1
   fi
 done
 [ "$kfail" -eq 0 ] && pass "state-key consistency"
 
 # 8. Commit/ADR template structure (deterministic drift guard against the golden shape)
-if grep -q 'Why:' skills/cloop/references/commit-templates.md \
-   && grep -q 'ADR:' skills/cloop/references/commit-templates.md \
-   && grep -q 'Loop:' skills/cloop/references/commit-templates.md \
-   && grep -q 'iteration' skills/cloop/references/commit-templates.md; then
+if grep -q 'Why:' skills/cloop-engine/references/commit-templates.md \
+   && grep -q 'ADR:' skills/cloop-engine/references/commit-templates.md \
+   && grep -q 'Loop:' skills/cloop-engine/references/commit-templates.md \
+   && grep -q 'iteration' skills/cloop-engine/references/commit-templates.md; then
   pass "commit template carries Why/ADR/Loop/iteration trail"
 else
   bad "commit template missing trail tokens"
 fi
-if grep -q 'qa_result' skills/cloop/references/adr-template.md \
-   && grep -q '## Context' skills/cloop/references/adr-template.md \
-   && grep -q '## Decision' skills/cloop/references/adr-template.md; then
+if grep -q 'qa_result' skills/cloop-engine/references/adr-template.md \
+   && grep -q '## Context' skills/cloop-engine/references/adr-template.md \
+   && grep -q '## Decision' skills/cloop-engine/references/adr-template.md; then
   pass "adr template carries qa_result + required sections"
 else
   bad "adr template missing required fields"

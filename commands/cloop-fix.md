@@ -10,7 +10,7 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Cro
 Requested slug (optional): **$ARGUMENTS**
 
 1. Identify the loop (given slug, or pick from `.claude/cloop/state/*.state.json`).
-2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and work the **"/cloop-fix checklist"** in
+2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and work the **"/cloop-fix checklist"** in
    order (incl. disabled-cron, parked-prompt, missing/duplicate/expired job, fresh-vs-resumed
    session, corrupt/stale state/lock).
 3. Re-arm **transactionally** where the checklist calls for it (CronCreate new → verify via
