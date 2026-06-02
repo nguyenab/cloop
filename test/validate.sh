@@ -43,10 +43,10 @@ while IFS= read -r ref; do
 done < <(grep -rhoE '\$\{CLAUDE_PLUGIN_ROOT\}/[A-Za-z0-9._/-]+' commands skills | sort -u)
 
 # 5b. No reference file is cited by bare name (must carry the ${CLAUDE_PLUGIN_ROOT} prefix)
-if grep -rnE '`(plan-template|notes-template|commit-templates|interview|SKILL)\.md`' commands skills \
+if grep -rnE '`(plan-template|adr-template|commit-templates|roles|interview|SKILL)\.md`' commands skills \
      | grep -vF '${CLAUDE_PLUGIN_ROOT}' >/dev/null 2>&1; then
   bad "bare reference-file path (missing \${CLAUDE_PLUGIN_ROOT})"
-  grep -rnE '`(plan-template|notes-template|commit-templates|interview|SKILL)\.md`' commands skills | grep -vF '${CLAUDE_PLUGIN_ROOT}'
+  grep -rnE '`(plan-template|adr-template|commit-templates|roles|interview|SKILL)\.md`' commands skills | grep -vF '${CLAUDE_PLUGIN_ROOT}'
 else
   pass "no bare reference-file paths"
 fi
@@ -59,21 +59,27 @@ else pass "no TODO/TBD/FIXME"; fi
 
 # 7. State keys are consistent between SKILL.md and the state schema
 kfail=0
-for k in slug status iteration started_at stop_after cron_job_id; do
+for k in slug status iteration mode interval max_iterations roles commit_style criteria_ref cron_job_id started_at last_adr; do
   grep -q "\"$k\"" skills/cloop-engine/SKILL.md && grep -q "\"$k\"" test/schemas/state.schema.json || { bad "state key drift: $k"; kfail=1; }
 done
 [ "$kfail" -eq 0 ] && pass "state-key consistency"
 
-# 8. Templates and golden fixture keep their shape
-grep -q 'cloop:' skills/cloop-engine/references/commit-templates.md \
-  && grep -q 'iteration' skills/cloop-engine/references/commit-templates.md \
-  && pass "commit template carries the cloop/iteration trailer" || bad "commit template trailer"
+# 8. Templates and golden fixtures keep their shape
+grep -q 'Why:' skills/cloop-engine/references/commit-templates.md \
+  && grep -q 'ADR:' skills/cloop-engine/references/commit-templates.md \
+  && grep -q 'cloop:' skills/cloop-engine/references/commit-templates.md \
+  && pass "commit template carries Why/ADR/cloop trailer" || bad "commit template trailer"
+grep -q 'qa:' skills/cloop-engine/references/adr-template.md \
+  && grep -q '## Context' skills/cloop-engine/references/adr-template.md \
+  && grep -q '## Decision' skills/cloop-engine/references/adr-template.md \
+  && pass "adr template carries qa + sections" || bad "adr template fields"
 grep -q 'interval' skills/cloop-engine/references/plan-template.md \
-  && grep -q 'run_for' skills/cloop-engine/references/plan-template.md \
-  && pass "plan template carries interval + run_for" || bad "plan template fields"
-[ -f skills/cloop-engine/references/notes-template.md ] \
-  && pass "notes template present" || bad "notes template missing"
+  && grep -q 'max_iterations' skills/cloop-engine/references/plan-template.md \
+  && grep -q 'roles' skills/cloop-engine/references/plan-template.md \
+  && pass "plan template carries interval + max_iterations + roles" || bad "plan template fields"
+[ -f skills/cloop-engine/references/roles.md ] && pass "roles reference present" || bad "roles reference missing"
 grep -q '^cloop: improve-tests iteration 7$' test/golden/commit-conventional.txt \
+  && grep -q '^ADR: ' test/golden/commit-conventional.txt \
   && pass "golden commit fixture intact" || bad "golden commit fixture drift"
 
 echo "----"

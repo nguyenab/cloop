@@ -1,19 +1,26 @@
 # cloop commit messages
 
-The trailer makes it easy to see which loop and iteration a commit came from.
+Each commit embeds the why and points to its ADR, so `git log` alone tells the story. Pick the
+style in setup with `commit_style`.
 
-## conventional (default)
+## conventional-context (default)
 ```
 <type>(<scope>): <summary>
 
-<one line on why, if it helps>
+Why: <1-2 sentences from the ADR's Context and Decision>
+ADR: .claude/cloop/adr/<slug>/NNNN-title.md
 cloop: <slug> iteration N
 ```
 `<type>` is one of feat, fix, refactor, test, docs, chore, perf, style.
 
-## plain
+## brief-context
 ```
-<summary>
+<short summary>
 
+Why: <1-2 sentences>
+ADR: .claude/cloop/adr/<slug>/NNNN-title.md
 cloop: <slug> iteration N
 ```
+
+## custom
+Your own template. It must include the `ADR:` path and the iteration so the trail stays intact.

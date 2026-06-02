@@ -1,41 +1,44 @@
 ---
 name: cloop-engine
-description: How a cloop loop works. Shared instructions the /cloop-* commands read by path. Not a user command and not auto-invoked.
+description: Shared instructions for how a cloop loop runs. The /cloop-* commands read this by path. Not a user command and not auto-invoked.
 disable-model-invocation: true
 ---
 
 # How a cloop loop works
 
-cloop is a consistent, repeatable way to run Claude Code's `/loop`. You capture the goal and cadence
-once (a plan, plus optional config defaults), and the loop runs on a timer, carries its own
-direction forward in a notes file, and writes a summary when it is done. The point is that you do
-not re-dump all your context every time you want a good `/loop`.
+cloop runs Claude Code's `/loop` with a real process around it. You set a loop up once: a goal, how
+often it runs, how long, and which roles do the work. Then each interval it plans the next step,
+does it, checks it, writes a short ADR explaining the decision, and commits with that reasoning in
+the message. You come back to a set of small commits that each say why they happened, plus a summary
+at the end.
 
-This file is shared instructions the `/cloop-*` commands read. Follow the part that applies.
+This file is the shared instructions the `/cloop-*` commands read. Follow the part that applies.
 
 ## Files (in the project being worked on)
 
 ```
-.claude/cloop/plans/<slug>.md     the goal and cadence, written once (committed)
-.claude/cloop/<slug>.notes.md     the loop's running "where I am / what's next" memory (committed)
-.claude/cloop/<slug>.state.json   small runtime state (gitignored)
-.claude/scheduled_tasks.json      the durable timer, managed by Claude Code
+.claude/cloop/plans/<slug>.md      the plan: goal, cadence, mode, roles (committed)
+.claude/cloop/adr/<slug>/NNNN-*.md  one ADR per iteration (committed)
+.claude/cloop/<slug>.state.json    small runtime state (gitignored)
+.claude/scheduled_tasks.json       the durable timer, managed by Claude Code
 ```
 
-On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json` (read it, append the line
-if it is missing).
+On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json`. ADRs follow
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/adr-template.md`, commit messages follow
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/commit-templates.md`, and the roles are
+described in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/roles.md`.
 
-The notes file follows `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/notes-template.md`, and
-commit messages follow `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/commit-templates.md`.
+## Plan frontmatter
 
-## Plan frontmatter the loop reads
-
-- `slug` short name for the loop
+- `slug` short name
+- `mode` strict or continuous
 - `interval` how often it fires, in whole minutes (e.g. 20m)
-- `run_for` how long to keep going: a duration (4h), a count (12 iterations), or "until <condition>"
-- `commit_style` conventional or plain (default conventional)
+- `max_iterations` stop after this many (required for strict; an optional cap for continuous)
+- `roles` which roles are active, e.g. `[planner, worker, qa, scribe]` (add `innovator` for the council)
+- `commit_style` conventional-context, brief-context, or custom
+- `criteria_ref` optional path to a PRD or user-stories file the loop measures "done" against
 
-Everything below the frontmatter is the goal in plain language.
+Below the frontmatter is the goal in plain language.
 
 ## State (keep it small)
 
@@ -44,50 +47,83 @@ Everything below the frontmatter is the goal in plain language.
   "slug": "<slug>",
   "status": "running",
   "iteration": 0,
+  "mode": "continuous",
+  "interval": "20m",
+  "max_iterations": 50,
+  "roles": ["planner", "worker", "qa", "scribe"],
+  "commit_style": "conventional-context",
+  "criteria_ref": null,
+  "cron_job_id": "<id>",
   "started_at": "<ISO>",
-  "stop_after": "<the run_for value, resolved to a time or count>",
-  "cron_job_id": "<id>"
+  "last_adr": null
 }
 ```
 
-`status` is running, stopped, or done. Write it atomically: write `<slug>.state.json.tmp`, then
-rename it over the real file.
+`status` is running, stopped, or completed. Write it atomically (write a `.tmp`, rename over).
+
+## Roles (you choose these in setup; see references/roles.md)
+
+A normal loop uses Planner, Worker, QA, and Scribe. Innovator is opt-in and heavier.
+- Planner scopes the next one or two iterations (or sketches the whole arc).
+- Worker does the implementation.
+- QA checks the result against the goal and `criteria_ref`.
+- Scribe writes the ADR and the commit message in your chosen style.
+- Innovator researches direction and runs a 5-agent council via the Workflow tool to vet an idea
+  before it reaches the Planner. Use it occasionally, not every iteration.
+
+## Modes
+
+- Strict: run until the goal/criteria are met or `max_iterations` is hit, then stop.
+- Continuous: keep going until you stop it; `max_iterations` is an optional safety cap.
 
 ## What one iteration does (run by /cloop-iterate, one per fire)
 
-It runs unattended, so it never asks you anything. It works only from the plan and the notes file.
-If something is genuinely unclear, it writes that into the summary and stops, rather than guessing
-forever.
+It runs unattended, so it never asks you anything. It works from the plan, the criteria, and the
+last ADR. If it genuinely cannot tell what to do, it writes that into the summary and stops.
 
-1. Read the plan (the goal) and the notes file (where things stand, what is next).
-2. Do the next step. On the first iteration, work it out from the goal.
-3. Work out what comes next: scope it, plan it, and research it if that helps, then write it into
-   the notes file so the next fire starts with direction. This is the part plain `/loop` does not do.
-4. Commit the work. One commit, staging only what this iteration changed, using `commit_style`.
-   Never push.
-5. Increment `iteration`. If `run_for` is reached or the goal is met, write the summary, cancel the
-   timer (`CronDelete`), and set `status` to done.
+1. Read the plan, `criteria_ref` if set, the last ADR, and `git log`.
+2. Plan: the Planner scopes one coherent step for this iteration and notes what likely comes next.
+3. Work: the Worker implements it.
+4. Check: QA verifies it against the goal and criteria, and records pass/fail in the ADR.
+5. Write: the Scribe writes `.claude/cloop/adr/<slug>/NNNN-title.md` (NNNN = last ADR number in the
+   slug's adr dir + 1, zero-padded to 4) and the commit message in `commit_style`, embedding the
+   ADR's reasoning.
+6. Commit: stage this iteration's changes plus the ADR and make one commit. Never push.
+7. Increment `iteration`, set `last_adr`. If strict and the goal/criteria are met or
+   `max_iterations` is reached, write the summary, cancel the timer (`CronDelete`), set status
+   completed.
 
-Iterations are counted, not pinned to the clock, so a late or skipped tick does not matter.
+If `innovator` is active, run its council once every several iterations (not every time) and feed
+its conclusion to the Planner. Iterations are counted, not pinned to the clock.
+
+## ADR and commits
+
+Each iteration leaves one ADR (Context, Decision, Alternatives, Consequences, Links) per
+`references/adr-template.md`, committed with the change. The commit message uses `commit_style` per
+`references/commit-templates.md` and embeds the why plus a pointer to the ADR, so `git log` alone
+tells the story.
 
 ## Starting a loop (used by /cloop and /cloop-execute)
 
-Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that
-is not :00 or :30 to avoid scheduler pileups). Create a durable, recurring timer whose prompt is:
-`Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the returned job id, the start time,
-and the resolved `stop_after` in state. Tell the user the cadence, how long it will run, and the
-job id.
+Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that is
+not :00 or :30). Create a durable, recurring timer whose prompt is:
+`Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the job id and start time in state.
+Tell the user the cadence, mode, roles, and job id.
 
 ## Summary (at the end, and for /cloop-status)
 
-A short plain rundown: the goal, how many iterations ran, the main things that changed (read from
-`git log`), and anything left over or unresolved. This is the "what happened while I was away"
-readout.
+A short plain rundown: the goal, the mode, how many iterations ran, the main changes (from `git log`
+and the ADRs), and anything left over. The "what happened while I was away" readout.
 
 ## If it stops firing (/cloop-fix)
 
 Check in order: is `CLAUDE_CODE_DISABLE_CRON` set; is the session actually idle (the timer only
-fires between turns, never mid-response); is the durable job still there (look in
-`.claude/scheduled_tasks.json` and `CronList`); has the `run_for` window already passed. If the job
-is missing and the loop is not done, recreate it the same way Starting a loop does, and update
+fires between turns); is the durable job still in `.claude/scheduled_tasks.json` and `CronList`; has
+the loop already completed. Recreate the timer if it is missing and the loop is not done, and update
 `cron_job_id`.
+
+## Workflows
+
+The Innovator council uses the Workflow tool to get several independent takes on a direction before
+the loop commits to it. You can also point an iteration at your own Workflow if you want it to drive
+the work; otherwise the roles above handle each iteration.

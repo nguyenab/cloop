@@ -1,6 +1,6 @@
 ---
 name: cloop-config
-description: "Set your default interval, run length, and commit style so setup does not ask every time."
+description: "Set your default mode, interval, iteration cap, roles, and commit style so setup does not ask every time."
 argument-hint: ""
 allowed-tools: ["Read", "Write", "Edit", "Bash", "AskUserQuestion"]
 ---
@@ -12,9 +12,11 @@ if it is missing, show current values, then set any of these:
 
 ```json
 {
+  "default_mode": "continuous",
   "default_interval": "20m",
-  "default_run_for": "4h",
-  "default_commit_style": "conventional"
+  "default_max_iterations": 50,
+  "default_roles": ["planner", "worker", "qa", "scribe"],
+  "default_commit_style": "conventional-context"
 }
 ```
 

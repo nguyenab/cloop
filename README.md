@@ -1,13 +1,13 @@
 # cloop
 
-Continuous, autonomous improvements and enhancements to your project while you're on the go. You
-give cloop a goal once and it keeps working on it, one small step at a time, leaving a clear trail
-of what it changed and why.
+Continuous, autonomous improvements to your project while you're on the go. You set a loop up once
+and it keeps working toward a goal, one iteration at a time, writing down why it did each thing and
+committing as it goes.
 
 It runs on Claude Code's built-in `/loop` and adds the parts `/loop` is missing: context and
-direction. cloop interviews you for the goal, writes a plan, then each interval does one piece of
-work, notes down what to tackle next, and commits. It stays agnostic about the work itself, so you
-can point it at tests, docs, refactors, cleanup, or anything else.
+direction. Each interval it plans the next step, does it, checks it against your goal, writes a
+short ADR, and makes a commit with that reasoning in the message. You choose which roles do the work
+and whether it runs strict (stop when done) or continuous.
 
 ## Read this first
 
@@ -25,9 +25,10 @@ claude plugin marketplace add nguyenab/cloop
 
 ## Use it
 
-Run `/cloop:cloop` and answer a few questions: what to work on, how often, when to stop. It writes
-a plan and asks if you want to start. Check in later with `/cloop:cloop-status`, stop with
-`/cloop:cloop-stop`. If it ever goes quiet, `/cloop:cloop-fix` works out why and restarts it.
+Run `/cloop:cloop` and answer a few questions: what to work on, whether there's a spec to measure
+against, how often, how long, which roles, and the commit style. It writes a plan and asks if you
+want to start. Check in with `/cloop:cloop-status`, stop with `/cloop:cloop-stop`. If it ever goes
+quiet, `/cloop:cloop-fix` works out why and restarts it.
 
 | Command | What it does |
 |---|---|
@@ -39,25 +40,33 @@ a plan and asks if you want to start. Check in later with `/cloop:cloop-status`,
 | `/cloop:cloop-fix` | Diagnose and restart a stalled loop |
 | `/cloop:cloop-config` | Set your defaults |
 
-## What one interval does
+## What one iteration does
 
-Read the plan and the loop's notes, do the next chunk of work, then work out what comes next and
-write it into the notes so the following run starts with direction. Make one commit on the current
-branch. It never pushes. It counts iterations, not minutes, so a late or skipped tick does not
+Plan the next step, do it, check it against your goal (and your spec, if you gave one), write a
+short ADR explaining the decision, and make one commit on the current branch with the reasoning in
+the message. It never pushes. It counts iterations, not minutes, so a late or skipped tick does not
 throw it off.
+
+## Roles and modes
+
+You pick the roles in setup. A normal loop uses Planner (scopes the next step), Worker (does it), QA
+(checks it against your goal), and Scribe (writes the ADR and commit). Innovator is optional and
+heavier: it researches direction and runs a small council to vet an idea before the Planner takes
+it. Modes are strict (stop when the goal is met or after a set number of iterations) or continuous
+(until you stop it).
 
 ## Write a plan by hand
 
 You do not need the interview. A plan is a small markdown file. Copy
 `skills/cloop-engine/references/plan-template.md` to `.claude/cloop/plans/<name>.md`, fill in the
-goal and interval, and run `/cloop:cloop-execute <name>`. Or run `/cloop:cloop-plan` and let it
-write the file for you.
+goal, mode, interval, roles, and commit style, then run `/cloop:cloop-execute <name>`. Or run
+`/cloop:cloop-plan` and let it write the file for you.
 
 ## Where it keeps things
 
 ```
 .claude/cloop/plans/<name>.md      your plan
-.claude/cloop/<name>.notes.md      the loop's running notes
+.claude/cloop/adr/<name>/          one ADR per iteration
 .claude/cloop/<name>.state.json    progress, ignored by git
 ```
 

@@ -4,8 +4,10 @@
   "type": "object",
   "additionalProperties": false,
   "properties": {
+    "default_mode": {"enum": ["strict", "continuous"]},
     "default_interval": {"type": "string"},
-    "default_run_for": {"type": ["string", "integer"]},
-    "default_commit_style": {"enum": ["conventional", "plain"]}
+    "default_max_iterations": {"type": "integer", "minimum": 1},
+    "default_roles": {"type": "array", "items": {"enum": ["planner", "worker", "qa", "scribe", "innovator"]}},
+    "default_commit_style": {"enum": ["conventional-context", "brief-context", "custom"]}
   }
 }
