@@ -96,7 +96,7 @@ it lands.
 
 | Layer | Changes? | Contents |
 |---|---|---|
-| **Engine** | Fixed | Read plan → run iteration lifecycle → write ADR → commit → update state → check stop condition. Lives in `skills/cloop/SKILL.md` + the `/cloop-iterate` command. |
+| **Engine** | Fixed | Read plan → run iteration lifecycle → write ADR → commit → update state → check stop condition. Lives in `skills/cloop-engine/SKILL.md` + the `/cloop-iterate` command. |
 | **Loop plan** | Per-loop, pluggable | Goals, done-criteria, interval, mode, branch, commit style. A Markdown file. |
 
 A dev makes C Loop do something new by **authoring a plan** (`plans/<slug>.md`), never by editing
@@ -339,7 +339,7 @@ installed command name derives from the **filename + plugin namespace**.
 | `/cloop:cloop-stop` | Stop a loop (`CronDelete` + `status: stopped`). |
 | `/cloop:cloop-fix` | Diagnose & re-arm a stalled loop (§8). |
 
-All commands are thin delegators that **Read** `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and
+All commands are thin delegators that **Read** `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and
 follow the relevant section. (The `@`-include / Read inlines the engine text; it does **not**
 invoke a separate skill — so each command's own `allowed-tools` is the load-bearing permission
 source.) `commands/*.md` is the legacy-but-supported layout; `skills/<name>/SKILL.md` is the
@@ -416,8 +416,8 @@ cloop/
   commands/
     cloop.md  cloop-plan.md  cloop-execute.md  cloop-iterate.md
     cloop-config.md  cloop-status.md  cloop-stop.md  cloop-fix.md
-  skills/cloop/SKILL.md                # the engine
-  skills/cloop/references/
+  skills/cloop-engine/SKILL.md                # the engine
+  skills/cloop-engine/references/
     adr-template.md  commit-templates.md  interview.md  plan-template.md
   test/                                # deterministic test tier (see §below)
   README.md
