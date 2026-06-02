@@ -31,7 +31,8 @@ git). Prescribe TOOL-level operations, not shell idioms: enumerate plans via Glo
 ```json
 {
   "slug": "<slug>", "status": "running",
-  "fires": 0, "iteration": 0,
+  "fires": 0,                     // bumped BEFORE work each fire (hard-ceiling counter)
+  "iteration": 0,                 // committed-iteration count, derived from ADRs/git
   "cron_job_id": "<id>", "engine": "cron", "interval": "20m",
   "branch": "cloop/<slug>", "armed_at_sha": "<HEAD sha at arm>",
   "durable": true, "created_at": "<ISO>", "expires_at": "<ISO+7d>", "rearm_after": "<ISO≈expires−1d>",
@@ -48,6 +49,10 @@ permission prompt — any such call freezes the ENTIRE loop until a human return
 ambiguity from plan + state + last ADR + criteria_ref. If you cannot proceed unambiguously, set
 status:paused, PushNotification, and STOP. Never ask.
 
+Enforcement: the `/cloop-iterate` command file MUST declare `user-invocable: false` and
+`disallowed-tools: [AskUserQuestion, EnterPlanMode, ExitPlanMode]` in its own YAML frontmatter —
+the harness enforces these, not this prose.
+
 ## Roles (inline behaviors; single agent; NO subagents/Workflow in v0.1)
 Planner (scope one change) → Worker (implement) → QA (verify vs done criteria) → Scribe (ADR +
 commit). These are fixed lifecycle phases, not a configurable list.
@@ -56,27 +61,29 @@ commit). These are fixed lifecycle phases, not a configurable list.
 Iterations key off the persisted counters, never the clock. Iteration identity derives from
 committed ADRs/git, not the gitignored state file (crash-safe).
 
-1. **Load & lock** — write `<slug>.lock` (session_marker + ISO now). If a FRESH lock from a
-   different session exists, STOP (another session owns this loop). Read plan + state. Bump and
+1. **Load & lock** — write `<slug>.lock` (session_marker + ISO now). If a lock from a different
+   session exists and is FRESH (updated within one interval), STOP (another session owns this
+   loop); if it is STALE (older than a few intervals), reclaim it (overwrite). Read plan + state. Bump and
    atomically persist `fires += 1` BEFORE any work. If state missing → STOP, tell user to run
    `/cloop:cloop-fix <slug>`.
-2. **Guard** — if `status != running` → STOP. If `fires > max_iterations` → finalize (Stop
+2. **Guard** — if `status != running` → STOP. If `fires >= max_iterations` → finalize (Stop
    conditions). If `consecutive_no_progress >= no_progress_limit` → set paused, PushNotification,
    STOP. Ensure current git branch == plan `branch` (unless `branch: current`); if a checkout is
    needed and clean, do it; if it would require resolving a dirty tree (a prompt) → pause+notify.
 3. **Expiry check** — if now ≥ `rearm_after` → RE-ARM transactionally (see Arming) before working;
-   PushNotification that it re-armed.
+   PushNotification that it re-armed. (If this fire will also pause/stop the loop but expiry is
+   imminent, re-arm anyway so the job survives for a later resume / `/cloop-fix`.)
 4. **Orient (Planner)** — scope ONE coherent change from plan + state + last ADR + `git log`.
 5. **Work (Worker)** — implement it.
 6. **Check (QA)** — verify against done criteria / criteria_ref; record pass/fail.
-7. **Document (Scribe)** — NNNN = max(existing ADR numbers in adr/<slug>/) + 1 (cross-check
+7. **Document (Scribe)** — NNNN = max(existing ADR numbers in adr/<slug>/, default 0) + 1 (cross-check
    `git log`), zero-padded to 4; title = kebab one-line subject. Write the ADR (qa_result set).
 8. **Commit** — stage ONLY this iteration's files + the ADR by EXPLICIT path (never `git add -A`/`.`).
    Secret guard: if any staged path looks like a secret (.env, *key*, *cred*, token patterns),
    UNSTAGE + skip it and note in the ADR. Make EXACTLY ONE local commit via `commit_style`. NEVER
-   push, --force, rebase, reset --hard, or amend. End with a CLEAN working tree: if nothing to
+   push, --force, --force-with-lease, rebase, reset --hard, or amend. End with a CLEAN working tree: if nothing to
    change, make no commit and `git restore`/drop partial edits.
-9. **Update state (sole owner of counters)** — set `iteration` = NNNN, `last_adr`, `last_commit`.
+9. **Update state (sole mutator of `consecutive_no_progress`)** — set `iteration` = NNNN, `last_adr`, `last_commit`.
    `consecutive_no_progress = 0` IFF a real commit was made AND QA passed; else increment it.
    Atomic write. Release lock.
 10. **Stop check** — see Stop conditions.
