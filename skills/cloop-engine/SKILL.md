@@ -1,141 +1,93 @@
 ---
 name: cloop-engine
-description: C Loop engine. Shared logic that the /cloop-* commands read by path, covering the iteration lifecycle, state and ADR and commit specs, durable cron arming, safety rails, and diagnostics. Not a user command and not auto-invoked.
+description: How a cloop loop works. Shared instructions the /cloop-* commands read by path. Not a user command and not auto-invoked.
 disable-model-invocation: true
 ---
 
-# C Loop Engine
+# How a cloop loop works
 
-C Loop wraps Claude Code's built-in `/loop` (cron) to run structured, self-documenting continuous
-loops. Each iteration produces one ADR and one verbose commit. The engine is fixed; *what* a loop
-works on is defined by a pluggable plan file. This skill is the shared logic for all `/cloop-*`
-commands — follow the relevant section when a command Reads it.
+cloop is a consistent, repeatable way to run Claude Code's `/loop`. You capture the goal and cadence
+once (a plan, plus optional config defaults), and the loop runs on a timer, carries its own
+direction forward in a notes file, and writes a summary when it is done. The point is that you do
+not re-dump all your context every time you want a good `/loop`.
 
-## On-disk layout (TARGET project, repo-root-relative)
+This file is shared instructions the `/cloop-*` commands read. Follow the part that applies.
+
+## Files (in the project being worked on)
+
 ```
-.claude/cloop/plans/<slug>.md              # plan (committed)
-.claude/cloop/state/<slug>.state.json      # runtime state (gitignored)
-.claude/cloop/state/<slug>.lock            # advisory cross-session lock (gitignored)
-.claude/cloop/adr/<slug>/NNNN-title.md      # one ADR per iteration (committed)
-.claude/scheduled_tasks.json               # native durable cron store (managed by Claude Code)
+.claude/cloop/plans/<slug>.md     the goal and cadence, written once (committed)
+.claude/cloop/<slug>.notes.md     the loop's running "where I am / what's next" memory (committed)
+.claude/cloop/<slug>.state.json   small runtime state (gitignored)
+.claude/scheduled_tasks.json      the durable timer, managed by Claude Code
 ```
-On first use, ensure `.gitignore` contains `.claude/cloop/state/`: Read it; if absent, append the
-line via Edit/Write (idempotent — never a shell redirect; works on Windows + macOS).
 
-## Cross-platform rule (load-bearing)
-The runtime path uses ONLY git + Claude tools (Read/Write/Edit/Glob, and Bash or PowerShell for
-git). Prescribe TOOL-level operations, not shell idioms: enumerate plans via Glob/Read; edit
-.gitignore via Read+Edit; count commits since arming by SHA range (`git log --oneline
-<armed_at_sha>..HEAD`), never `--since=<date>`. NO runtime Node or Python.
+On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json` (read it, append the line
+if it is missing).
 
-## State schema (`<slug>.state.json`) — write ATOMICALLY (write .tmp, then rename over real file)
+The notes file follows `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/notes-template.md`, and
+commit messages follow `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/commit-templates.md`.
+
+## Plan frontmatter the loop reads
+
+- `slug` short name for the loop
+- `interval` how often it fires, in whole minutes (e.g. 20m)
+- `run_for` how long to keep going: a duration (4h), a count (12 iterations), or "until <condition>"
+- `commit_style` conventional or plain (default conventional)
+
+Everything below the frontmatter is the goal in plain language.
+
+## State (keep it small)
+
 ```json
 {
-  "slug": "<slug>", "status": "running",
-  "fires": 0,                     // bumped BEFORE work each fire (hard-ceiling counter)
-  "iteration": 0,                 // committed-iteration count, derived from ADRs/git
-  "cron_job_id": "<id>", "engine": "cron", "interval": "20m",
-  "branch": "cloop/<slug>", "armed_at_sha": "<HEAD sha at arm>",
-  "durable": true, "created_at": "<ISO>", "expires_at": "<ISO+7d>", "rearm_after": "<ISO≈expires−1d>",
-  "last_adr": null, "last_commit": null, "consecutive_no_progress": 0,
-  "session_marker": "<session id>"
+  "slug": "<slug>",
+  "status": "running",
+  "iteration": 0,
+  "started_at": "<ISO>",
+  "stop_after": "<the run_for value, resolved to a time or count>",
+  "cron_job_id": "<id>"
 }
 ```
-`status` is one of running|paused|stopped|completed. Stamp times/SHAs when writing.
 
-## NON-INTERACTIVITY INVARIANT (the most important rule)
-`/cloop-iterate` runs UNATTENDED in the live session between turns. It MUST NEVER call
-AskUserQuestion, EnterPlanMode/ExitPlanMode, or any human-waiting tool, and MUST NOT trigger a
-permission prompt — any such call freezes the ENTIRE loop until a human returns. Resolve ALL
-ambiguity from plan + state + last ADR + criteria_ref. If you cannot proceed unambiguously, set
-status:paused, PushNotification, and STOP. Never ask.
+`status` is running, stopped, or done. Write it atomically: write `<slug>.state.json.tmp`, then
+rename it over the real file.
 
-Enforcement: the `/cloop-iterate` command file MUST declare `user-invocable: false` and
-`disallowed-tools: [AskUserQuestion, EnterPlanMode, ExitPlanMode]` in its own YAML frontmatter —
-the harness enforces these, not this prose.
+## What one iteration does (run by /cloop-iterate, one per fire)
 
-## Roles (inline behaviors; single agent; NO subagents/Workflow in v0.1)
-Planner (scope one change) → Worker (implement) → QA (verify vs done criteria) → Scribe (ADR +
-commit). These are fixed lifecycle phases, not a configurable list.
+It runs unattended, so it never asks you anything. It works only from the plan and the notes file.
+If something is genuinely unclear, it writes that into the summary and stops, rather than guessing
+forever.
 
-## Iteration lifecycle (run by /cloop-iterate; EXACTLY ONE per fire)
-Iterations key off the persisted counters, never the clock. Iteration identity derives from
-committed ADRs/git, not the gitignored state file (crash-safe).
+1. Read the plan (the goal) and the notes file (where things stand, what is next).
+2. Do the next step. On the first iteration, work it out from the goal.
+3. Work out what comes next: scope it, plan it, and research it if that helps, then write it into
+   the notes file so the next fire starts with direction. This is the part plain `/loop` does not do.
+4. Commit the work. One commit, staging only what this iteration changed, using `commit_style`.
+   Never push.
+5. Increment `iteration`. If `run_for` is reached or the goal is met, write the summary, cancel the
+   timer (`CronDelete`), and set `status` to done.
 
-1. **Load & lock** — write `<slug>.lock` (session_marker + ISO now). If a lock from a different
-   session exists and is FRESH (updated within one interval), STOP (another session owns this
-   loop); if it is STALE (older than a few intervals), reclaim it (overwrite). Read plan + state. Bump and
-   atomically persist `fires += 1` BEFORE any work. If state missing → STOP, tell user to run
-   `/cloop:cloop-fix <slug>`.
-2. **Guard** — if `status != running` → STOP. If `fires >= max_iterations` → finalize (Stop
-   conditions). If `consecutive_no_progress >= no_progress_limit` → set paused, PushNotification,
-   STOP. Ensure current git branch == plan `branch` (unless `branch: current`); if a checkout is
-   needed and clean, do it; if it would require resolving a dirty tree (a prompt) → pause+notify.
-3. **Expiry check** — if now ≥ `rearm_after` → RE-ARM transactionally (see Arming) before working;
-   PushNotification that it re-armed. (If this fire will also pause/stop the loop but expiry is
-   imminent, re-arm anyway so the job survives for a later resume / `/cloop-fix`.)
-4. **Orient (Planner)** — scope ONE coherent change from plan + state + last ADR + `git log`.
-5. **Work (Worker)** — implement it.
-6. **Check (QA)** — verify against done criteria / criteria_ref; record pass/fail.
-7. **Document (Scribe)** — NNNN = max(existing ADR numbers in adr/<slug>/, default 0) + 1 (cross-check
-   `git log`), zero-padded to 4; title = kebab one-line subject. Write the ADR (qa_result set).
-8. **Commit** — stage ONLY this iteration's files + the ADR by EXPLICIT path (never `git add -A`/`.`).
-   Secret guard: if any staged path looks like a secret (.env, *key*, *cred*, token patterns),
-   UNSTAGE + skip it and note in the ADR. Make EXACTLY ONE local commit via `commit_style`. NEVER
-   push, --force, --force-with-lease, rebase, reset --hard, or amend. End with a CLEAN working tree: if nothing to
-   change, make no commit and `git restore`/drop partial edits.
-9. **Update state (sole mutator of `consecutive_no_progress`)** — set `iteration` = NNNN, `last_adr`, `last_commit`.
-   `consecutive_no_progress = 0` IFF a real commit was made AND QA passed; else increment it.
-   Atomic write. Release lock.
-10. **Stop check** — see Stop conditions.
+Iterations are counted, not pinned to the clock, so a late or skipped tick does not matter.
 
-## Stop conditions
-- Strict: done criteria met OR `fires >= max_iterations` → `CronDelete` cron_job_id, status:
-  completed, final summary line, PushNotification.
-- Continuous: until `/cloop-stop`; still bounded by max_iterations (→completed) and no-progress (→paused).
+## Starting a loop (used by /cloop and /cloop-execute)
 
-## Arming a durable cron loop (used by /cloop-execute, /cloop, and re-arm)
-1. Read plan frontmatter. `interval` is REQUIRED — if absent, REFUSE: "self-paced/dynamic loops
-   are not supported in v0.1; specify an interval (e.g. 20m)." Validate `branch` and `criteria_ref`
-   (repo-relative, no `..`, no absolute, no symlink escape).
-2. Build a 5-field cron expression from `interval`, choosing a non-`:00`/`:30` minute (e.g. `20m`
-   → `7,27,47 * * * *`; hourly → `7 * * * *`). Whole-minute floor.
-3. Cost confirm: show `~max_iterations fires × interval → est. duration` (note token cost scales
-   with iterations) and get confirmation before arming. (In /cloop-iterate's re-arm path this is
-   skipped — already confirmed.)
-4. Branch: if `branch != current`, create/checkout `branch`; record `armed_at_sha` = HEAD sha.
-5. `CronCreate` with `durable: true`, `recurring: true`, and a SELF-CONTAINED prompt (does not
-   depend solely on slash expansion):
-   `Run exactly ONE C Loop iteration for slug "<slug>": invoke /cloop:cloop-iterate <slug> (and if
-   that is unavailable, Read .claude/cloop/ + this repo's cloop engine and run one iteration).`
-6. Capture the job id → `cron_job_id`; set durable:true, created_at=now, expires_at=now+7d,
-   rearm_after≈expires−1d; atomic write state. Confirm slug, interval, cron expr, job id, branch,
-   expiry to the user.
+Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that
+is not :00 or :30 to avoid scheduler pileups). Create a durable, recurring timer whose prompt is:
+`Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the returned job id, the start time,
+and the resolved `stop_after` in state. Tell the user the cadence, how long it will run, and the
+job id.
 
-### Transactional RE-ARM (expiry / fix)
-(a) `CronCreate` the new durable+recurring job, capture new id; (b) verify via `CronList` it
-registered — if NOT, keep old cron_job_id, PushNotification failure, STOP; (c) `CronDelete` the old
-job; (d) update cron_job_id/created_at/expires_at/rearm_after; atomic write. Never leave two live
-jobs or zero.
+## Summary (at the end, and for /cloop-status)
 
-## /cloop-fix checklist (in order; then repair)
-1. `CLAUDE_CODE_DISABLE_CRON` set? → report (cron globally disabled).
-2. Session parked on an AskUserQuestion/permission prompt? → loop can't fire (never idle); tell
-   user to answer/dismiss; flag the offending path.
-3. Job present? Read `.claude/scheduled_tasks.json` + `CronList`; is cron_job_id there?
-4. Duplicate jobs for this slug? → `CronDelete` extras, keep one.
-5. Missing but status running → in-memory death OR fresh conversation instead of `--resume`.
-   Advise resuming the arming session, or re-arm transactionally; update cron_job_id.
-6. Present but `fires` not advancing → session rarely idle (long iterations/busy) → advise
-   smaller scope; offer longer interval.
-7. Near expiry (≥ rearm_after) → re-arm transactionally.
-8. State/lock corrupt or stale → rebuild state from highest ADR + `git log` + plan; clear stale lock.
-9. Stopped legitimately (criteria met / ceiling) → report; offer to raise ceiling or go continuous.
+A short plain rundown: the goal, how many iterations ran, the main things that changed (read from
+`git log`), and anything left over or unresolved. This is the "what happened while I was away"
+readout.
 
-## Morning report (used by /cloop-status)
-One scannable line per loop: `<slug> [status] iter N/max · C commits since arm · last ADR "<title>"
-· expires in Xd`. Commit count via SHA range `git log --oneline <armed_at_sha>..HEAD`. Lead with
-deterministic facts; treat progress-vs-criteria as best-effort qualitative. For any detected
-problem (running-but-job-absent, duplicate jobs, near-expiry, corrupt state) print the EXACT
-remediation command (e.g. `/cloop:cloop-fix <slug>`). Define an explicit empty state ("no active
-loops").
+## If it stops firing (/cloop-fix)
+
+Check in order: is `CLAUDE_CODE_DISABLE_CRON` set; is the session actually idle (the timer only
+fires between turns, never mid-response); is the durable job still there (look in
+`.claude/scheduled_tasks.json` and `CronList`); has the `run_for` window already passed. If the job
+is missing and the loop is not done, recreate it the same way Starting a loop does, and update
+`cron_job_id`.

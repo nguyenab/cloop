@@ -6,7 +6,7 @@ of what it changed and why.
 
 It runs on Claude Code's built-in `/loop` and adds the parts `/loop` is missing: context and
 direction. cloop interviews you for the goal, writes a plan, then each interval does one piece of
-work, records the decision behind it, and commits. It stays agnostic about the work itself, so you
+work, notes down what to tackle next, and commits. It stays agnostic about the work itself, so you
 can point it at tests, docs, refactors, cleanup, or anything else.
 
 ## Read this first
@@ -41,9 +41,10 @@ a plan and asks if you want to start. Check in later with `/cloop:cloop-status`,
 
 ## What one interval does
 
-Pick the next chunk of work, do it, check it against your goal, write a short decision record under
-`.claude/cloop/adr/`, and make one commit on a `cloop/<name>` branch. It never pushes or rewrites
-history. It counts iterations, not minutes, so a late or skipped tick does not throw it off.
+Read the plan and the loop's notes, do the next chunk of work, then work out what comes next and
+write it into the notes so the following run starts with direction. Make one commit on the current
+branch. It never pushes. It counts iterations, not minutes, so a late or skipped tick does not
+throw it off.
 
 ## Write a plan by hand
 
@@ -55,9 +56,9 @@ write the file for you.
 ## Where it keeps things
 
 ```
-.claude/cloop/plans/<name>.md          your plan
-.claude/cloop/adr/<name>/              one decision record per iteration
-.claude/cloop/state/<name>.state.json  progress, ignored by git
+.claude/cloop/plans/<name>.md      your plan
+.claude/cloop/<name>.notes.md      the loop's running notes
+.claude/cloop/<name>.state.json    progress, ignored by git
 ```
 
 ## License

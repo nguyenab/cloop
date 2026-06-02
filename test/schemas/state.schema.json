@@ -1,26 +1,15 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "C Loop state file",
+  "title": "cloop state file",
   "type": "object",
-  "required": ["slug","status","fires","iteration","cron_job_id","engine","interval","branch","armed_at_sha","durable","created_at","expires_at","rearm_after","last_adr","last_commit","consecutive_no_progress","session_marker"],
+  "additionalProperties": false,
+  "required": ["slug", "status", "iteration", "started_at", "stop_after", "cron_job_id"],
   "properties": {
-    "slug": {"type":"string"},
-    "status": {"enum":["running","paused","stopped","completed"]},
-    "fires": {"type":"integer","minimum":0},
-    "iteration": {"type":"integer","minimum":0},
-    "cron_job_id": {"type":["string","null"]},
-    "engine": {"enum":["cron","dynamic"]},
-    "interval": {"type":"string"},
-    "branch": {"type":"string"},
-    "armed_at_sha": {"type":["string","null"]},
-    "durable": {"type":"boolean"},
-    "created_at": {"type":"string"},
-    "expires_at": {"type":"string"},
-    "rearm_after": {"type":"string"},
-    "last_adr": {"type":["string","null"]},
-    "last_commit": {"type":["string","null"]},
-    "consecutive_no_progress": {"type":"integer","minimum":0},
-    "session_marker": {"type":["string","null"]}
-  },
-  "additionalProperties": false
+    "slug": {"type": "string"},
+    "status": {"enum": ["running", "stopped", "done"]},
+    "iteration": {"type": "integer", "minimum": 0},
+    "started_at": {"type": "string"},
+    "stop_after": {"type": ["string", "integer"]},
+    "cron_job_id": {"type": ["string", "null"]}
+  }
 }

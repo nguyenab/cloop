@@ -1,18 +1,15 @@
 ---
 name: cloop-execute
-description: "Arm a durable C Loop from an existing plan: estimate+confirm, create the branch, start the cron loop."
+description: "Start a cloop loop from an existing plan."
 argument-hint: "[slug]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "CronCreate", "CronList", "PushNotification"]
 ---
 
-# C Loop — Execute
+# cloop: start
 
-Requested slug (optional): **$ARGUMENTS**
+Slug (optional): **$ARGUMENTS**
 
-1. Enumerate plans in `.claude/cloop/plans/` (Glob/Read). If a slug was given and matches, use it;
-   else present choices via `AskUserQuestion`. No plans → suggest `/cloop:cloop-plan` and stop.
-2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow **"Arming a durable cron loop"**:
-   require `interval`; validate `branch`/`criteria_ref`; show the cost estimate and CONFIRM;
-   create/checkout the branch; `CronCreate` durable+recurring with the self-contained payload;
-   record cron_job_id/armed_at_sha; initialize state (atomic write).
-3. Confirm cadence, cron expression, job id, branch, and expiry to the user.
+1. List plans in `.claude/cloop/plans/`. If a slug was given and matches, use it; otherwise ask
+   which one. If there are none, suggest `/cloop:cloop-plan` and stop.
+2. Follow **Starting a loop** in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`: build the
+   timer, save state, and tell the user the cadence, how long it will run, and the job id.

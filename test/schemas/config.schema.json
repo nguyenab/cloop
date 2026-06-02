@@ -1,14 +1,11 @@
 {
   "$schema": "http://json-schema.org/draft-07/schema#",
-  "title": "C Loop user config",
+  "title": "cloop user config",
   "type": "object",
   "additionalProperties": false,
   "properties": {
-    "default_mode": {"enum":["strict","continuous"]},
-    "default_interval": {"type":"string"},
-    "default_commit_style": {"enum":["conventional-context","brief-context","custom"]},
-    "default_max_iterations": {"type":"integer","minimum":1},
-    "default_no_progress_limit": {"type":"integer","minimum":1},
-    "default_branch_isolation": {"type":"boolean"}
+    "default_interval": {"type": "string"},
+    "default_run_for": {"type": ["string", "integer"]},
+    "default_commit_style": {"enum": ["conventional", "plain"]}
   }
 }

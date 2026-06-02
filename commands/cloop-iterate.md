@@ -1,21 +1,19 @@
 ---
 name: cloop-iterate
-description: "INTERNAL — runs exactly one unattended C Loop iteration for a slug. Fired by the loop's cron job."
+description: "Internal. Runs one cloop iteration for a slug. Fired by the loop's timer, not meant to be run by hand."
 argument-hint: "<slug>"
 user-invocable: false
-allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "CronCreate", "CronDelete", "CronList", "PushNotification"]
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "CronDelete", "CronList", "PushNotification"]
 disallowed-tools: ["AskUserQuestion", "EnterPlanMode", "ExitPlanMode"]
 ---
 
-# C Loop — Run One Iteration (UNATTENDED)
+# cloop: one iteration
 
 Slug: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow its **Iteration lifecycle** section
-for the slug above. Run EXACTLY ONE iteration, then stop — do NOT loop internally; the cron
-schedule fires the next one.
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow **What one iteration does**
+for this slug. Do exactly one iteration, then stop. The timer fires the next one.
 
-This runs with NO human present. NEVER call a tool that waits for a human and NEVER do anything
-that would trigger a permission prompt. Resolve all ambiguity from the plan + state + last ADR +
-criteria_ref; if you cannot, set status:paused, PushNotification, and STOP (per the
-NON-INTERACTIVITY INVARIANT). If state is missing or status != running, follow the Guard step.
+No human is here, so do not ask anything and do not do anything that needs a permission prompt.
+Work from the plan and the notes file. If you truly cannot tell what to do, write that into the
+summary and stop.

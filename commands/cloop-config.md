@@ -1,24 +1,21 @@
 ---
 name: cloop-config
-description: "Read/write user-wide C Loop defaults (~/.claude/cloop/config.json) so interviews can skip those questions."
+description: "Set your default interval, run length, and commit style so setup does not ask every time."
 argument-hint: ""
 allowed-tools: ["Read", "Write", "Edit", "Bash", "AskUserQuestion"]
 ---
 
-# C Loop — Config
+# cloop: config
 
-Manage user-wide defaults at `~/.claude/cloop/config.json` (also hand-editable). Create
-`~/.claude/cloop/` if missing. Show current values, then set any keys via `AskUserQuestion`.
+Manage defaults at `~/.claude/cloop/config.json` (also fine to hand-edit). Create `~/.claude/cloop/`
+if it is missing, show current values, then set any of these:
 
-Schema (write valid JSON; omit unset keys):
 ```json
 {
-  "default_mode": "continuous",
   "default_interval": "20m",
-  "default_commit_style": "conventional-context",
-  "default_max_iterations": 50,
-  "default_no_progress_limit": 5,
-  "default_branch_isolation": true
+  "default_run_for": "4h",
+  "default_commit_style": "conventional"
 }
 ```
-Precedence the interview MUST follow: explicit interview answer > config default > built-in default.
+
+Setup reads this and skips anything it already covers, so you answer once.

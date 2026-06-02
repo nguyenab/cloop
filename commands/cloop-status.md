@@ -1,17 +1,15 @@
 ---
 name: cloop-status
-description: "Show active C Loops (iteration, last ADR, commits, expiry) as a morning report; print exact remediation commands for any problem."
+description: "Show what your cloop loops are doing and what they have changed so far."
 argument-hint: "[slug]"
 allowed-tools: ["Read", "Glob", "Bash", "CronList"]
 ---
 
-# C Loop — Status
+# cloop: status
 
-Optional slug filter: **$ARGUMENTS**
+Slug (optional): **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and produce the **Morning report** for each
-`.claude/cloop/state/*.state.json` (or the given slug): one scannable line per loop (status,
-iter N/max, commit count via `git log --oneline <armed_at_sha>..HEAD`, last ADR title, expires in
-Xd). Cross-check `CronList` + `.claude/scheduled_tasks.json`; if a loop claims running but its job
-is absent (or duplicated, or near expiry, or state corrupt), print the EXACT remediation command
-(e.g. `/cloop:cloop-fix <slug>`). If there are no loops, say so plainly.
+For each `.claude/cloop/<slug>.state.json` (or the given slug), produce the **Summary** described in
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`: goal, iterations run, the main changes (from
+`git log`), and anything left over. Cross-check `CronList`; if a loop says running but its timer is
+gone, say so and point to `/cloop:cloop-fix <slug>`. If there are no loops, say so plainly.

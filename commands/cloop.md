@@ -1,18 +1,17 @@
 ---
 name: cloop
-description: "Start C Loop: full interview to design a continuous loop, write its plan, then (with a cost estimate) offer to start iterating."
-argument-hint: "[goal hint]"
+description: "Set up a continuous /loop and start it: a few quick questions, then it runs on a timer and carries its own direction forward."
+argument-hint: "[what to work on]"
 allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "WebSearch", "CronCreate", "CronList", "PushNotification"]
 ---
 
-# C Loop
+# cloop
 
-Optional goal hint: **$ARGUMENTS**
+What to work on (optional): **$ARGUMENTS**
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`, run the interview in
-   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md`, write the plan from
+1. Ask the short setup questions in
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md` and write the plan from
    `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/plan-template.md`.
-2. Then ask (via `AskUserQuestion`) whether to start now.
-   - Yes → follow **"Arming a durable cron loop"** (estimate+confirm, branch, durable CronCreate,
-     init state).
-   - No → tell them to start later with `/cloop:cloop-execute`.
+2. Ask whether to start now. If yes, follow **Starting a loop** in
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`. If no, tell them they can start later with
+   `/cloop:cloop-execute`.

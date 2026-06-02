@@ -1,18 +1,15 @@
 ---
 name: cloop-fix
-description: "Diagnose why a C Loop isn't firing and repair/re-arm it (disabled cron, parked prompt, missing/duplicate/expired job, fresh-vs-resumed session, corrupt state)."
+description: "Work out why a cloop loop stopped firing and restart it."
 argument-hint: "[slug]"
-allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "CronCreate", "CronList", "CronDelete", "PushNotification"]
+allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "CronCreate", "CronList", "PushNotification"]
 ---
 
-# C Loop — Fix
+# cloop: fix
 
-Requested slug (optional): **$ARGUMENTS**
+Slug (optional): **$ARGUMENTS**
 
-1. Identify the loop (given slug, or pick from `.claude/cloop/state/*.state.json`).
-2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and work the **"/cloop-fix checklist"** in
-   order (incl. disabled-cron, parked-prompt, missing/duplicate/expired job, fresh-vs-resumed
-   session, corrupt/stale state/lock).
-3. Re-arm **transactionally** where the checklist calls for it (CronCreate new → verify via
-   CronList → CronDelete old → update state).
-4. Print a clear summary: what was wrong, what changed, current status.
+Find the loop (given slug, or pick from `.claude/cloop/<slug>.state.json`), then follow **If it
+stops firing** in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`. Recreate the timer if it is
+missing and the loop is not done, update `cron_job_id`, and say plainly what was wrong and what you
+changed.

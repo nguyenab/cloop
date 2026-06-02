@@ -1,28 +1,19 @@
-# C Loop Commit Templates
+# cloop commit messages
 
-Placeholder substitution is done by the Scribe agent (no engine "machine"). The `ADR:` pointer is
-always the FULL repo-root-relative path. Trailers use ASCII separators (no non-ASCII middle dot).
+The trailer makes it easy to see which loop and iteration a commit came from.
 
-## conventional-context (default)
+## conventional (default)
 ```
-<type>(<scope>): <concise summary>
+<type>(<scope>): <summary>
 
-Why: <1-3 sentence rationale from the ADR Context/Decision>
-ADR: .claude/cloop/adr/<slug>/NNNN-title.md
-Loop: <slug> | iteration N
+<one line on why, if it helps>
+cloop: <slug> iteration N
 ```
 `<type>` is one of feat, fix, refactor, test, docs, chore, perf, style.
 
-## brief-context
+## plain
 ```
-<concise non-conventional subject>
+<summary>
 
-Why: <1-3 sentence rationale>
-ADR: .claude/cloop/adr/<slug>/NNNN-title.md
-Loop: <slug> | iteration N
+cloop: <slug> iteration N
 ```
-
-## custom
-Use the plan's `custom_commit_template` verbatim. It MUST include the full ADR path and the
-iteration number so the trail stays intact. Substituted placeholders: `{summary}`, `{why}`,
-`{adr_path}`, `{slug}`, `{iteration}`, `{type}`, `{scope}`.

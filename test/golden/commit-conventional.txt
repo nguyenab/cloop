@@ -1,5 +1,4 @@
-feat(parser): handle empty input gracefully
+feat(parser): handle empty input
 
-Why: Empty files crashed the tokenizer; guard and return an empty token list.
-ADR: .claude/cloop/adr/improve-test-coverage/0007-handle-empty-input.md
-Loop: improve-test-coverage | iteration 7
+Empty files crashed the tokenizer; guard and return no tokens.
+cloop: improve-tests iteration 7
