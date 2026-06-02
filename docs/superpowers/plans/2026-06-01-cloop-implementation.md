@@ -4,7 +4,7 @@
 
 **Goal:** Build the `cloop` Claude Code plugin (v0.1) — a robust, cross-platform, **cron-only** wrapper around the built-in `/loop` that runs structured, self-documenting continuous loops (interview → plan → durable cron iterations → per-iteration ADR + verbose commit → diagnostics), with a deterministic test tier.
 
-**Architecture:** One plugin at the repo root. Eight thin `commands/*.md` slash entry points delegate to ONE engine skill (`skills/cloop/SKILL.md`). The loop is driven by `CronCreate`/`CronList`/`CronDelete` (Claude tools, no shell, no OS cron). Per-loop plans/state/ADRs live under the target project's `.claude/cloop/`. Iterations run **unattended and non-interactively** on an isolated branch.
+**Architecture:** One plugin at the repo root. Eight thin `commands/*.md` slash entry points delegate to ONE engine skill (`skills/cloop-engine/SKILL.md`). The loop is driven by `CronCreate`/`CronList`/`CronDelete` (Claude tools, no shell, no OS cron). Per-loop plans/state/ADRs live under the target project's `.claude/cloop/`. Iterations run **unattended and non-interactively** on an isolated branch.
 
 **Tech Stack:** Claude Code plugin (Markdown + YAML frontmatter + JSON manifests). **No runtime language** (the runtime path uses only git + Claude tools). `python3`/bash appear only in build/test steps, which are scoped to a POSIX dev env (macOS, or Git Bash/WSL on Windows).
 
@@ -27,8 +27,8 @@
 commands/
   cloop.md  cloop-plan.md  cloop-execute.md  cloop-iterate.md
   cloop-config.md  cloop-status.md  cloop-stop.md  cloop-fix.md
-skills/cloop/SKILL.md                 # the engine (all shared logic)
-skills/cloop/references/
+skills/cloop-engine/SKILL.md                 # the engine (all shared logic)
+skills/cloop-engine/references/
   plan-template.md  adr-template.md  commit-templates.md  interview.md
 test/
   validate.sh                         # deterministic static-tier gate (POSIX dev env)
@@ -38,7 +38,7 @@ README.md
 .gitignore                            # contains .claude/cloop/state/
 ```
 
-**Responsibility boundaries:** `commands/*.md` are thin — parse `$ARGUMENTS`, then **Read** `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and follow the relevant section (the Read inlines engine text; it does not invoke a separate skill, so each command's own `allowed-tools` is the load-bearing permission). `skills/cloop/SKILL.md` is the single source of truth for the lifecycle, state schema, safety rails, and `/cloop-fix`.
+**Responsibility boundaries:** `commands/*.md` are thin — parse `$ARGUMENTS`, then **Read** `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow the relevant section (the Read inlines engine text; it does not invoke a separate skill, so each command's own `allowed-tools` is the load-bearing permission). `skills/cloop-engine/SKILL.md` is the single source of truth for the lifecycle, state schema, safety rails, and `/cloop-fix`.
 
 ---
 
@@ -96,7 +96,7 @@ git commit -m "feat(cloop): add plugin + self-marketplace manifests"
 
 ## Task 2: Reference templates
 
-**Files:** Create `skills/cloop/references/{plan-template,adr-template,commit-templates}.md`
+**Files:** Create `skills/cloop-engine/references/{plan-template,adr-template,commit-templates}.md`
 
 - [ ] **Step 1: `plan-template.md`**
 
@@ -211,16 +211,16 @@ iteration number so the trail stays intact. Substituted placeholders: `{summary}
 `{adr_path}`, `{slug}`, `{iteration}`, `{type}`, `{scope}`.
 ````
 
-- [ ] **Step 4: Verify** — `for f in plan-template adr-template commit-templates; do head -1 "skills/cloop/references/$f.md"; done` → three `# C Loop …` headers.
-- [ ] **Step 5: Commit** — `git add skills/cloop/references/ && git commit -m "feat(cloop): add plan, ADR, and commit reference templates"`
+- [ ] **Step 4: Verify** — `for f in plan-template adr-template commit-templates; do head -1 "skills/cloop-engine/references/$f.md"; done` → three `# C Loop …` headers.
+- [ ] **Step 5: Commit** — `git add skills/cloop-engine/references/ && git commit -m "feat(cloop): add plan, ADR, and commit reference templates"`
 
 ---
 
 ## Task 3: The engine skill
 
-**Files:** Create `skills/cloop/SKILL.md`
+**Files:** Create `skills/cloop-engine/SKILL.md`
 
-- [ ] **Step 1: Write `skills/cloop/SKILL.md`**
+- [ ] **Step 1: Write `skills/cloop-engine/SKILL.md`**
 
 ````markdown
 ---
@@ -358,8 +358,8 @@ remediation command (e.g. `/cloop:cloop-fix <slug>`). Define an explicit empty s
 loops").
 ````
 
-- [ ] **Step 2: Verify** — `sed -n '1,4p' skills/cloop/SKILL.md` shows `name: cloop`; `grep -c "^## " skills/cloop/SKILL.md` ≥ 10.
-- [ ] **Step 3: Commit** — `git add skills/cloop/SKILL.md && git commit -m "feat(cloop): add the engine skill (lifecycle, safety rails, arming, fix)"`
+- [ ] **Step 2: Verify** — `sed -n '1,4p' skills/cloop-engine/SKILL.md` shows `name: cloop`; `grep -c "^## " skills/cloop-engine/SKILL.md` ≥ 10.
+- [ ] **Step 3: Commit** — `git add skills/cloop-engine/SKILL.md && git commit -m "feat(cloop): add the engine skill (lifecycle, safety rails, arming, fix)"`
 
 ---
 
@@ -383,7 +383,7 @@ disallowed-tools: ["AskUserQuestion", "EnterPlanMode", "ExitPlanMode"]
 
 Slug: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and follow its **Iteration lifecycle** section
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow its **Iteration lifecycle** section
 for the slug above. Run EXACTLY ONE iteration, then stop — do NOT loop internally; the cron
 schedule fires the next one.
 
@@ -400,9 +400,9 @@ NON-INTERACTIVITY INVARIANT). If state is missing or status != running, follow t
 
 ## Task 5: `/cloop-plan` + interview reference
 
-**Files:** Create `skills/cloop/references/interview.md`, `commands/cloop-plan.md`
+**Files:** Create `skills/cloop-engine/references/interview.md`, `commands/cloop-plan.md`
 
-- [ ] **Step 1: `skills/cloop/references/interview.md`**
+- [ ] **Step 1: `skills/cloop-engine/references/interview.md`**
 
 ````markdown
 # C Loop Interview
@@ -441,14 +441,14 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Web
 
 Optional goal hint: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` (layout) and run the interview in
-`${CLAUDE_PLUGIN_ROOT}/skills/cloop/references/interview.md`, writing the plan from
-`${CLAUDE_PLUGIN_ROOT}/skills/cloop/references/plan-template.md`. Do NOT arm a loop — stop after
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` (layout) and run the interview in
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md`, writing the plan from
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/plan-template.md`. Do NOT arm a loop — stop after
 writing the plan and tell the user to start it with `/cloop:cloop-execute`.
 ```
 
-- [ ] **Step 3: Verify** — `grep "name:" commands/cloop-plan.md` and `test -f skills/cloop/references/interview.md && echo OK`.
-- [ ] **Step 4: Commit** — `git add commands/cloop-plan.md skills/cloop/references/interview.md && git commit -m "feat(cloop): add /cloop-plan and interview reference"`
+- [ ] **Step 3: Verify** — `grep "name:" commands/cloop-plan.md` and `test -f skills/cloop-engine/references/interview.md && echo OK`.
+- [ ] **Step 4: Commit** — `git add commands/cloop-plan.md skills/cloop-engine/references/interview.md && git commit -m "feat(cloop): add /cloop-plan and interview reference"`
 
 ---
 
@@ -472,7 +472,7 @@ Requested slug (optional): **$ARGUMENTS**
 
 1. Enumerate plans in `.claude/cloop/plans/` (Glob/Read). If a slug was given and matches, use it;
    else present choices via `AskUserQuestion`. No plans → suggest `/cloop:cloop-plan` and stop.
-2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and follow **"Arming a durable cron loop"**:
+2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow **"Arming a durable cron loop"**:
    require `interval`; validate `branch`/`criteria_ref`; show the cost estimate and CONFIRM;
    create/checkout the branch; `CronCreate` durable+recurring with the self-contained payload;
    record cron_job_id/armed_at_sha; initialize state (atomic write).
@@ -502,8 +502,8 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Web
 
 Optional goal hint: **$ARGUMENTS**
 
-1. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md`, run the interview in
-   `${CLAUDE_PLUGIN_ROOT}/skills/cloop/references/interview.md`, write the plan from
+1. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`, run the interview in
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md`, write the plan from
    `plan-template.md`.
 2. Then ask (via `AskUserQuestion`) whether to start now.
    - Yes → follow **"Arming a durable cron loop"** (estimate+confirm, branch, durable CronCreate,
@@ -534,7 +534,7 @@ allowed-tools: ["Read", "Glob", "Bash", "CronList"]
 
 Optional slug filter: **$ARGUMENTS**
 
-Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and produce the **Morning report** for each
+Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and produce the **Morning report** for each
 `.claude/cloop/state/*.state.json` (or the given slug): one scannable line per loop (status,
 iter N/max, commit count via `git log --oneline <armed_at_sha>..HEAD`, last ADR title, expires in
 Xd). Cross-check `CronList` + `.claude/scheduled_tasks.json`; if a loop claims running but its job
@@ -635,7 +635,7 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Cro
 Requested slug (optional): **$ARGUMENTS**
 
 1. Identify the loop (given slug, or pick from `.claude/cloop/state/*.state.json`).
-2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop/SKILL.md` and work the **"/cloop-fix checklist"** in
+2. Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and work the **"/cloop-fix checklist"** in
    order (incl. disabled-cron, parked-prompt, missing/duplicate/expired job, fresh-vs-resumed
    session, corrupt/stale state/lock).
 3. Re-arm **transactionally** where the checklist calls for it (CronCreate new → verify via

@@ -1,0 +1,13 @@
+{
+  "name": "cloop-marketplace",
+  "description": "Marketplace hosting the C Loop plugin.",
+  "owner": { "name": "Abraham Nguyen" },
+  "plugins": [
+    {
+      "name": "cloop",
+      "description": "Structured, self-documenting continuous loops on top of Claude Code's /loop.",
+      "category": "productivity",
+      "source": "./"
+    }
+  ]
+}
