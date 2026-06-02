@@ -98,6 +98,12 @@ last ADR. If it genuinely cannot tell what to do, it writes that into the summar
 If `innovator` is active, run its council once every several iterations (not every time) and feed
 its conclusion to the Planner. Iterations are counted, not pinned to the clock.
 
+Catching up on batched fires: when the session was busy and then goes idle, several timer fires can
+arrive together in one turn. Treat each as its own iteration — run them in sequence, one coherent
+step and one commit per fire, and stop the moment `max_iterations` is reached (drop any extra fires
+past the cap). Do not fold them into a single commit; the small, individually-reasoned commits are
+the whole point.
+
 ## ADR and commits
 
 Each iteration leaves one ADR (Context, Decision, Alternatives, Consequences, Links) per
