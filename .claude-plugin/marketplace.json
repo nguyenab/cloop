@@ -5,7 +5,7 @@
   "plugins": [
     {
       "name": "cloop",
-      "description": "Structured, self-documenting continuous loops on top of Claude Code's /loop.",
+      "description": "Continuous, autonomous improvements to your project while you're on the go. Adds context and direction to Claude Code's /loop, and stays agnostic about the work.",
       "category": "productivity",
       "source": "./"
     }

@@ -1,7 +1,7 @@
 {
   "name": "cloop",
   "version": "0.1.0",
-  "description": "C Loop: structured, self-documenting continuous loops on top of Claude Code's /loop. Interview-driven setup, pluggable per-loop plans, per-iteration ADRs and verbose commits, durable cron with self-healing diagnostics.",
+  "description": "Continuous, autonomous improvements to your project while you're on the go. cloop adds the context and direction Claude Code's /loop lacks, and stays agnostic about the work.",
   "author": { "name": "Abraham Nguyen" },
   "license": "MIT"
 }
