@@ -12,9 +12,11 @@ and whether it runs strict (stop when done) or continuous.
 ## Read this first
 
 cloop only runs while a Claude Code session is open and sitting idle. Close the terminal and it
-stops. Marking a loop durable means it picks back up when you reopen that same session with
-`claude --resume`, as long as it has been less than 7 days. So "leave it going overnight" means
-leaving a session open and idle, not closing the laptop.
+stops. If the harness persisted the timer, the loop can pick back up when you reopen that same
+session with `claude --resume` (within 7 days) — but timers are often registered session-only and
+do not survive a close, so don't count on it. If the loop is quiet after reopening, restart it with
+`/cloop:cloop-execute` or `/cloop:cloop-fix`. So "leave it going overnight" means leaving a session
+open and idle, not closing the laptop.
 
 ## Install
 
