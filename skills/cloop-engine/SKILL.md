@@ -95,6 +95,11 @@ last ADR. If it genuinely cannot tell what to do, it writes that into the summar
    `max_iterations` is reached, write the summary, cancel the timer (`CronDelete`), set status
    completed.
 
+On a QA fail: fix it within the same iteration if you can. If you can't, revert this iteration's
+code change so the next fire starts from a working tree, but still write the ADR with `qa: fail`
+recording what broke and why, and commit that (plus any revert) so the trail stays intact. Never
+hand a broken or half-finished working tree to the next fire.
+
 If `innovator` is active, run its council once every several iterations (not every time) and feed
 its conclusion to the Planner. Iterations are counted, not pinned to the clock.
 
