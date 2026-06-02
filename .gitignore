@@ -1,1 +1,3 @@
 .claude/cloop/*.state.json
+.claude/scheduled_tasks.json
+.claude/scheduled_tasks.lock

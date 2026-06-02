@@ -23,7 +23,9 @@ This file is the shared instructions the `/cloop-*` commands read. Follow the pa
 .claude/scheduled_tasks.json       the timer, when the harness persists it (often session-only)
 ```
 
-On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json`. ADRs follow
+On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json` and the scheduler's
+runtime files `.claude/scheduled_tasks.json` and `.claude/scheduled_tasks.lock`, so timer state never
+lands in a commit. ADRs follow
 `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/adr-template.md`, commit messages follow
 `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/commit-templates.md`, and the roles are
 described in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/roles.md`.
