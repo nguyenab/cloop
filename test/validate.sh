@@ -55,6 +55,16 @@ while IFS= read -r ref; do
   if [ -f "$rel" ]; then pass "ref: $rel"; else bad "missing ref: $rel"; fi
 done < <(grep -rhoE '\$\{CLAUDE_PLUGIN_ROOT\}/[A-Za-z0-9._/-]+' commands skills | sort -u)
 
+# 5b. No reference file is cited by bare name (must carry the ${CLAUDE_PLUGIN_ROOT} prefix so it
+#     resolves at runtime). Catches e.g. `plan-template.md` written without its path.
+if grep -rnE '`(plan-template|adr-template|commit-templates|interview|SKILL)\.md`' commands skills \
+     | grep -vF '${CLAUDE_PLUGIN_ROOT}' >/dev/null 2>&1; then
+  bad "bare reference-file path (missing \${CLAUDE_PLUGIN_ROOT} prefix)"
+  grep -rnE '`(plan-template|adr-template|commit-templates|interview|SKILL)\.md`' commands skills | grep -vF '${CLAUDE_PLUGIN_ROOT}'
+else
+  pass "no bare reference-file paths"
+fi
+
 # 6. No placeholder markers left in shipped prose
 targets="commands skills"
 [ -f README.md ] && targets="$targets README.md"

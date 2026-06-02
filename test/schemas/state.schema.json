@@ -21,5 +21,6 @@
     "last_commit": {"type":["string","null"]},
     "consecutive_no_progress": {"type":"integer","minimum":0},
     "session_marker": {"type":["string","null"]}
-  }
+  },
+  "additionalProperties": false
 }

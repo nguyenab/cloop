@@ -17,4 +17,5 @@ with a present user, NEVER by cron. Skip any question already set by `~/.claude/
 5. **Confirm slug** — propose the generated kebab slug; let the user accept or rename (it is their
    handle to every command).
 
-Output: write `.claude/cloop/plans/<slug>.md` from `plan-template.md`. Echo slug + path.
+Output: write `.claude/cloop/plans/<slug>.md` from
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/plan-template.md`. Echo slug + path.
