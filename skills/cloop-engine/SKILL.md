@@ -20,7 +20,7 @@ This file is the shared instructions the `/cloop-*` commands read. Follow the pa
 .claude/cloop/plans/<slug>.md      the plan: goal, cadence, mode, roles (committed)
 .claude/cloop/adr/<slug>/NNNN-*.md  one ADR per iteration (committed)
 .claude/cloop/<slug>.state.json    small runtime state (gitignored)
-.claude/scheduled_tasks.json       the durable timer, managed by Claude Code
+.claude/scheduled_tasks.json       the timer, when the harness persists it (often session-only)
 ```
 
 On first use, make sure `.gitignore` ignores `.claude/cloop/*.state.json`. ADRs follow
@@ -106,9 +106,15 @@ tells the story.
 ## Starting a loop (used by /cloop and /cloop-execute)
 
 Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that is
-not :00 or :30). Create a durable, recurring timer whose prompt is:
+not :00 or :30). Ask for a durable, recurring timer whose prompt is:
 `Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the job id and start time in state.
 Tell the user the cadence, mode, roles, and job id.
+
+Heads up on persistence: even when you request a durable timer, the harness may register it
+session-only — it will not write `.claude/scheduled_tasks.json` and the timer dies when Claude exits.
+Check the tool's response. If it came back session-only, tell the user plainly: the loop only runs
+while this session stays open and idle between turns; closing it stops the loop, and they can restart
+it with `/cloop:cloop-execute` or `/cloop:cloop-fix`.
 
 ## Summary (at the end, and for /cloop-status)
 
@@ -118,8 +124,9 @@ and the ADRs), and anything left over. The "what happened while I was away" read
 ## If it stops firing (/cloop-fix)
 
 Check in order: is `CLAUDE_CODE_DISABLE_CRON` set; is the session actually idle (the timer only
-fires between turns); is the durable job still in `.claude/scheduled_tasks.json` and `CronList`; has
-the loop already completed. Recreate the timer if it is missing and the loop is not done, and update
+fires between turns); was the session closed and reopened (a session-only timer does not survive
+that, and `.claude/scheduled_tasks.json` will be absent); is the job still in `CronList`; has the
+loop already completed. Recreate the timer if it is missing and the loop is not done, and update
 `cron_job_id`.
 
 ## Workflows
