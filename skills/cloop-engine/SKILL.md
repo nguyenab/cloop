@@ -108,7 +108,10 @@ tells the story.
 ## Starting a loop (used by /cloop and /cloop-execute)
 
 Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that is
-not :00 or :30). Ask for a durable, recurring timer whose prompt is:
+not :00 or :30). Translate the interval honestly: `*/N` only steps evenly when N divides 60 (5, 10,
+12, 15, 20, 30), and step-from-offset forms like `7/18` are rejected by the scheduler. For an
+interval that does not divide 60, use an evenly-spaced comma list of minutes instead (18m becomes
+`7,25,43`, which accepts one wider gap per hour). Ask for a durable, recurring timer whose prompt is:
 `Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the job id and start time in state.
 Tell the user the cadence, mode, roles, and job id.
 
