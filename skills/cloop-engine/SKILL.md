@@ -55,6 +55,7 @@ Below the frontmatter is the goal in plain language.
   "roles": ["planner", "worker", "qa", "scribe"],
   "commit_style": "conventional-context",
   "criteria_ref": null,
+  "cron": "<expr>",
   "cron_job_id": "<id>",
   "started_at": "<ISO>",
   "last_adr": null
@@ -123,7 +124,8 @@ not :00 or :30). Translate the interval honestly: `*/N` only steps evenly when N
 12, 15, 20, 30), and step-from-offset forms like `7/18` are rejected by the scheduler. For an
 interval that does not divide 60, use an evenly-spaced comma list of minutes instead (18m becomes
 `7,25,43`, which accepts one wider gap per hour). Ask for a durable, recurring timer whose prompt is:
-`Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the job id and start time in state.
+`Run one cloop iteration: /cloop:cloop-iterate <slug>`. Save the cron expression, job id, and start
+time in state.
 Tell the user the cadence, mode, roles, and job id.
 
 Heads up on persistence: even when you request a durable timer, the harness may register it
@@ -142,8 +144,9 @@ and the ADRs), and anything left over. The "what happened while I was away" read
 Check in order: is `CLAUDE_CODE_DISABLE_CRON` set; is the session actually idle (the timer only
 fires between turns); was the session closed and reopened (a session-only timer does not survive
 that, and `.claude/scheduled_tasks.json` will be absent); is the job still in `CronList`; has the
-loop already completed. Recreate the timer if it is missing and the loop is not done, and update
-`cron_job_id`.
+loop already completed. Recreate the timer from the saved `cron` expression if it is missing and the
+loop is not done — reusing it keeps the schedule identical instead of re-deriving and drifting — then
+update `cron_job_id`.
 
 ## Workflows
 
