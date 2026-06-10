@@ -1,0 +1,17 @@
+Quota Status
+
+Fetching quotas...
+
+Claude (2 accounts)
+
+  [OK] alice (alice@example.com) (default)
+    Reset schedule: 5h in 2h | weekly in 3d 18h
+    5h usage limit           [███████████         ] 56% Resets in 2h
+    Weekly usage limit       [██████████████████  ] 90% Resets in 3d 18h
+    Weekly usage (Sonnet)    [███████████████████ ] 97% Resets in 3d 18h
+
+  [OK] bob (bob@example.com)
+    Reset schedule: 5h in 2h | weekly in 2h
+    5h usage limit           [███████████████     ] 73% Resets in 2h
+    Weekly usage limit       [██████████████████  ] 92% Resets in 2h
+    Weekly usage (Sonnet)    [███████████████████ ] 96% Resets in 2h

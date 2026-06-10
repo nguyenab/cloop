@@ -82,6 +82,16 @@ grep -q '^cloop: improve-tests iteration 7$' test/golden/commit-conventional.txt
   && grep -q '^ADR: ' test/golden/commit-conventional.txt \
   && pass "golden commit fixture intact" || bad "golden commit fixture drift"
 
+# 9. Quota parser reproduces the golden expectation from the captured fixture
+if awk -f skills/cloop-engine/references/quota-parse.awk test/golden/quota-fixture.txt \
+     | diff -q - test/golden/quota-parse-expected.txt >/dev/null 2>&1; then
+  pass "quota parse matches golden"
+else
+  bad "quota parse drift"
+  awk -f skills/cloop-engine/references/quota-parse.awk test/golden/quota-fixture.txt \
+    | diff - test/golden/quota-parse-expected.txt
+fi
+
 echo "----"
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "FAILURES PRESENT"
 exit "$fail"

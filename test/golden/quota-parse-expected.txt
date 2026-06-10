@@ -1,0 +1,6 @@
+five_h_pct=56
+five_h_reset=2h
+weekly_pct=90
+weekly_reset=3d 18h
+sonnet_pct=97
+sonnet_reset=3d 18h
