@@ -37,6 +37,28 @@ Three behaviors, built incrementally:
      `CronDelete` the slow heartbeat, set `status: running`; if still out → keep checking.
    - Notify the user (PushNotification) on pause and on resume.
 
+# Council amendments (2026-06-10, fable-evolution iteration 2)
+
+A 5-agent council reviewed this plan against live data (5h 56%, weekly 90%, Sonnet-weekly 97%)
+and Fable 5's launch facts (2x Opus pricing, ~30% fatter tokenization). Four amendments override
+the matching parts of the behaviors above:
+
+1. **Gate on the binding constraint, not 5h alone.** Skip when `max(five_h_pct, weekly_pct)`
+   crosses the threshold, and compute `resume_at` from whichever window is binding. A 5h-only
+   gate sails straight into a weekly wall (tonight's exact shape).
+2. **Horizon-honest pause.** Only arm the slow heartbeat when the binding reset is within a
+   session-plausible horizon (~6h, i.e. the 5h wall). For a weekly wall (resets in days), do not
+   arm a timer that cannot survive the session: set `paused-quota`, notify with the exact reset
+   time, and have `cloop-fix`/`cloop-status` offer the re-arm on the next session.
+3. **Wrap-up landing, not silent skip.** When the gate trips, spend one deliberately tiny
+   iteration landing the loop: commit or revert in-flight work, write a handoff ADR (what
+   shipped, what's half-done, resume_at), notify, then pause. Exhaustion is a scheduled landing,
+   not an error to suppress.
+4. **Quota-delta accounting.** Snapshot the parsed quota at iteration start and end, store the
+   delta (`last_quota`, `last_iteration_cost`), and surface cost-per-iteration and
+   "≈N iterations of headroom left" in `cloop-status`. This makes the threshold evidence-based
+   instead of a magic 90%.
+
 # Scope and notes
 
 - **Where the logic lives.** cloop is markdown skill-instructions, not a runtime. Add a small
