@@ -3,19 +3,118 @@
   "title": "cloop state file",
   "type": "object",
   "additionalProperties": false,
-  "required": ["slug", "status", "iteration", "mode", "interval", "max_iterations", "roles", "commit_style", "criteria_ref", "cron_job_id", "started_at", "last_adr"],
+  "required": [
+    "slug",
+    "status",
+    "iteration",
+    "mode",
+    "interval",
+    "max_iterations",
+    "roles",
+    "commit_style",
+    "criteria_ref",
+    "cron_job_id",
+    "started_at",
+    "last_adr"
+  ],
   "properties": {
-    "slug": {"type": "string"},
-    "status": {"enum": ["running", "stopped", "completed"]},
-    "iteration": {"type": "integer", "minimum": 0},
-    "mode": {"enum": ["strict", "continuous"]},
-    "interval": {"type": "string"},
-    "max_iterations": {"type": "integer", "minimum": 1},
-    "roles": {"type": "array", "items": {"enum": ["planner", "worker", "qa", "scribe", "innovator"]}},
-    "commit_style": {"enum": ["conventional-context", "brief-context", "custom"]},
-    "criteria_ref": {"type": ["string", "null"]},
-    "cron_job_id": {"type": ["string", "null"]},
-    "started_at": {"type": "string"},
-    "last_adr": {"type": ["string", "null"]}
+    "slug": {
+      "type": "string"
+    },
+    "status": {
+      "enum": [
+        "running",
+        "stopped",
+        "completed",
+        "paused-quota"
+      ]
+    },
+    "iteration": {
+      "type": "integer",
+      "minimum": 0
+    },
+    "mode": {
+      "enum": [
+        "strict",
+        "continuous"
+      ]
+    },
+    "interval": {
+      "type": "string"
+    },
+    "max_iterations": {
+      "type": "integer",
+      "minimum": 1
+    },
+    "roles": {
+      "type": "array",
+      "items": {
+        "enum": [
+          "planner",
+          "worker",
+          "qa",
+          "scribe",
+          "innovator"
+        ]
+      }
+    },
+    "commit_style": {
+      "enum": [
+        "conventional-context",
+        "brief-context",
+        "custom"
+      ]
+    },
+    "criteria_ref": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cron_job_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "started_at": {
+      "type": "string"
+    },
+    "last_adr": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "resume_at": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "paused_reason": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "last_quota": {
+      "type": [
+        "object",
+        "null"
+      ]
+    },
+    "slow_cron_job_id": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "cron": {
+      "type": [
+        "string",
+        "null"
+      ]
+    }
   }
 }

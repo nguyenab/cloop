@@ -58,11 +58,17 @@ Below the frontmatter is the goal in plain language.
   "cron": "<expr>",
   "cron_job_id": "<id>",
   "started_at": "<ISO>",
-  "last_adr": null
+  "last_adr": null,
+  "resume_at": null,
+  "paused_reason": null,
+  "last_quota": null,
+  "slow_cron_job_id": null
 }
 ```
 
-`status` is running, stopped, or completed. Write it atomically (write a `.tmp`, rename over).
+`status` is running, stopped, completed, or paused-quota. The last four fields stay null until
+the quota gate pauses a loop (see `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`).
+Write the file atomically (write a `.tmp`, rename over).
 
 ## Roles (you choose these in setup; see references/roles.md)
 
@@ -84,6 +90,10 @@ A normal loop uses Planner, Worker, QA, and Scribe. Innovator is opt-in and heav
 It runs unattended, so it never asks you anything. It works from the plan, the criteria, and the
 last ADR. If it genuinely cannot tell what to do, it writes that into the summary and stops.
 
+0. Quota gate: run the check in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`
+   (a cheap local call). If the binding window (the higher of 5h and weekly) is over the
+   threshold, run that file's wrap-up landing instead of a normal iteration. Empty output means
+   quota unknown: proceed normally.
 1. Read the plan, `criteria_ref` if set, the last ADR, and `git log`.
 2. Plan: the Planner scopes one coherent step for this iteration and notes what likely comes next.
 3. Work: the Worker implements it.
@@ -117,9 +127,19 @@ Each iteration leaves one ADR (Context, Decision, Alternatives, Consequences, Li
 `references/commit-templates.md` and embeds the why plus a pointer to the ADR, so `git log` alone
 tells the story.
 
+## Quota awareness
+
+cloop reads remaining Claude capacity from the `ccs` proxy before spending an iteration, gates
+each fire on the binding limit (5h or weekly, whichever is higher), and parks itself cleanly
+with a handoff ADR when capacity runs out — pausing honestly based on whether the reset is
+session-plausible. The check, the parse, the threshold, and the wrap-up landing are all in
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`. If `ccs` is absent the gate is
+a no-op and loops behave as before.
+
 ## Starting a loop (used by /cloop and /cloop-execute)
 
-Read the plan. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that is
+Read the plan. Run the quota gate first — starting a loop into an exhausted account just
+schedules failures. Build a 5-field cron expression from `interval` (whole minutes; pick a minute that is
 not :00 or :30). Translate the interval honestly: `*/N` only steps evenly when N divides 60 (5, 10,
 12, 15, 20, 30), and step-from-offset forms like `7/18` are rejected by the scheduler. For an
 interval that does not divide 60, use an evenly-spaced comma list of minutes instead (18m becomes

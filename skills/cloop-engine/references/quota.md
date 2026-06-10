@@ -46,3 +46,42 @@ blocking the loop on a broken readout.
 
 `test/validate.sh` runs the parser against the fixture and compares to
 `test/golden/quota-parse-expected.txt`, so a format change that breaks the parse fails the gate.
+
+## The gate (step 0 of every iteration)
+
+Run the check before any token-heavy work. Decide on the **binding constraint** — whichever of
+`five_h_pct` and `weekly_pct` is higher — never on the 5h gauge alone (a 5h-only gate sleeps
+through a weekly wall).
+
+- **Empty output** → quota unknown. Proceed normally.
+- **Binding percentage ≤ 90** → proceed normally.
+- **Binding percentage > 90** → do not start new feature work. Run a **wrap-up landing** instead:
+  exhaustion is a scheduled landing, not an error to suppress.
+
+The threshold is a documented constant: **90** (percent used, on the binding window). Tune it
+here if needed; nothing else hardcodes it.
+
+## Wrap-up landing and pause
+
+A wrap-up landing is one deliberately tiny iteration that leaves the loop parked cleanly:
+
+1. Leave the tree coherent: commit safe in-flight work or revert it, as on a QA fail.
+2. Write a short handoff ADR: what shipped so far, what is half-done, the quota readout, and
+   when capacity returns. This is the iteration's ADR; commit it.
+3. Set state: `status: paused-quota`, `paused_reason` (e.g. `weekly at 92%`), `resume_at` = now
+   plus the **binding window's** reset (`five_h_reset` or `weekly_reset`, whichever is binding)
+   plus a small buffer, and store the parsed readout in `last_quota`.
+4. Pause honestly, by reset horizon:
+   - **Binding reset within ~6h** (the 5h wall): `CronDelete` the fast timer and `CronCreate` a
+     slow check-only heartbeat (~20m) whose prompt re-runs the iterate command for this slug;
+     save its id in `slow_cron_job_id`. On a later fire with capacity back, re-arm the fast
+     timer from the saved `cron` expression, delete the heartbeat, set `status: running`.
+   - **Binding reset beyond ~6h** (a weekly wall, measured in days): do **not** arm a heartbeat
+     — a session-only timer cannot survive until a multi-day reset, and pretending otherwise is
+     theater. `CronDelete` the fast timer, leave `slow_cron_job_id` null, and rely on
+     `/cloop:cloop-fix` or `/cloop:cloop-status` to offer the re-arm in a later session.
+5. Notify (PushNotification): paused, why, and the exact reset time.
+
+A real **429 during an iteration** is the same landing, taken immediately: the proxy already
+rotates accounts, so a 429 means everyone is out. Stop the current step, keep the tree coherent,
+and run the landing with whatever quota readout is available.
