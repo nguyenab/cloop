@@ -10,8 +10,9 @@ allowed-tools: ["Read", "Write", "Edit", "Glob", "Bash", "AskUserQuestion", "Web
 What to work on (optional): **$ARGUMENTS**
 
 1. Ask the short setup questions in
-   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md` and write the plan from
-   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/plan-template.md`.
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/interview.md`, write the plan from
+   `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/plan-template.md`, and write the criteria
+   ledger alongside it at `.claude/cloop/criteria/<slug>.md`.
 2. Ask whether to start now. If yes, follow **Starting a loop** in
    `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md`. If no, tell them they can start later with
    `/cloop:cloop-execute`.

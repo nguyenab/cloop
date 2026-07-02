@@ -12,6 +12,7 @@ max_iterations: 50        # stop after this many (required for strict; a cap for
 roles: [planner, worker, qa, scribe]   # add innovator for the council
 commit_style: conventional-context     # conventional-context | brief-context | custom
 criteria_ref: null         # optional path to a PRD or user-stories file
+check: null                # optional shell command that must exit 0 for QA to pass (e.g. npm test)
 ---
 
 # Goal
@@ -23,3 +24,6 @@ criteria_ref: null         # optional path to a PRD or user-stories file
 
 Interval tips: whole minutes only, and avoid :00 and :30 to dodge scheduler pileups. Around 20m is a
 sensible default; very short intervals burn tokens fast.
+
+A loop without a `check` command is only as reliable as LLM judgment; give it one when the project
+has tests.

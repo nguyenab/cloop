@@ -44,10 +44,10 @@ quiet, `/cloop:cloop-fix` works out why and restarts it.
 
 ## What one iteration does
 
-Plan the next step, do it, check it against your goal (and your spec, if you gave one), write a
-short ADR explaining the decision, and make one commit on the current branch with the reasoning in
-the message. It never pushes. It counts iterations, not minutes, so a late or skipped tick does not
-throw it off.
+Plan the next step, do it, check it against your goal (and your spec, if you gave one) — running your
+check command and ticking off the criteria ledger as it goes — write a short ADR explaining the
+decision, and make one commit on the current branch with the reasoning in the message. It never
+pushes. It counts iterations, not minutes, so a late or skipped tick does not throw it off.
 
 ## Roles and modes
 
@@ -56,6 +56,25 @@ You pick the roles in setup. A normal loop uses Planner (scopes the next step), 
 heavier: it researches direction and runs a small council to vet an idea before the Planner takes
 it. Modes are strict (stop when the goal is met or after a set number of iterations) or continuous
 (until you stop it).
+
+## How it stays on track
+
+If your project has tests, give the loop a check command at setup. Every iteration runs it first, and
+a non-zero exit fails QA before any judgment is spent, so a change that breaks the build never counts
+as done.
+
+Setup also writes a criteria ledger next to the plan: a short checklist, one line per requirement,
+each with a concrete way to verify it. The loop ticks a box only when that check holds, so
+`N of M criteria met` in `/cloop:cloop-status` is a real count, and a strict loop is done when every
+box is ticked rather than when the model feels finished.
+
+Each iteration ends its ADR with a short handoff note — what happened, and if QA failed, the exact
+check that failed and what the next iteration should avoid. The next fire reads the last few of these
+as feedback, so a dead end is not retried the same way twice.
+
+If a loop does get stuck — three QA fails in a row, or a long stretch with no progress — it stops
+itself instead of grinding. It writes a diagnosis ADR, marks itself stalled, and cancels its timer;
+`/cloop:cloop-fix` reads that diagnosis and can restart it with a narrower scope.
 
 ## Write a plan by hand
 

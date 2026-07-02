@@ -25,6 +25,11 @@ qa: pass        # pass | fail | n/a
 ## Consequences
 <effects, follow-ups, and what likely comes next>
 
+## Handoff
+<at most 5 lines for the next iteration to read as external feedback: the outcome; if QA failed, the
+grounded reason — the failing check and its output, not "insufficient"; what to avoid next; what
+likely comes next>
+
 ## Links
 - files: <paths this iteration touched>
 ```

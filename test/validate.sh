@@ -59,7 +59,7 @@ else pass "no TODO/TBD/FIXME"; fi
 
 # 7. State keys are consistent between SKILL.md and the state schema
 kfail=0
-for k in slug status iteration mode interval max_iterations roles commit_style criteria_ref cron_job_id started_at last_adr; do
+for k in slug status iteration mode interval max_iterations roles commit_style criteria_ref check cron_job_id started_at last_adr consecutive_qa_failures last_progress_iteration stalled_reason; do
   grep -q "\"$k\"" skills/cloop-engine/SKILL.md && grep -q "\"$k\"" test/schemas/state.schema.json || { bad "state key drift: $k"; kfail=1; }
 done
 [ "$kfail" -eq 0 ] && pass "state-key consistency"
@@ -91,6 +91,23 @@ else
   awk -f skills/cloop-engine/references/quota-parse.awk test/golden/quota-fixture.txt \
     | diff - test/golden/quota-parse-expected.txt
 fi
+
+# 10. Loop-engineering hardening mechanisms keep their shape
+grep -q '## Handoff' skills/cloop-engine/references/adr-template.md \
+  && pass "adr template carries Handoff" || bad "adr template Handoff"
+grep -q 'check:' skills/cloop-engine/references/plan-template.md \
+  && pass "plan template carries check field" || bad "plan template check field"
+[ -f skills/cloop-engine/references/criteria-template.md ] \
+  && grep -qF -- '- [ ]' skills/cloop-engine/references/criteria-template.md \
+  && grep -q 'verify:' skills/cloop-engine/references/criteria-template.md \
+  && pass "criteria template carries checkbox + verify" || bad "criteria template shape"
+[ -f skills/cloop-engine/references/guardrails.md ] \
+  && grep -q 'consecutive_qa_failures' skills/cloop-engine/references/guardrails.md \
+  && grep -q 'stalled' skills/cloop-engine/references/guardrails.md \
+  && pass "guardrails reference carries counters + stalled" || bad "guardrails reference shape"
+grep -q 'stalled' skills/cloop-engine/SKILL.md \
+  && grep -q 'Done when' skills/cloop-engine/SKILL.md \
+  && pass "SKILL.md carries stalled status + Done when" || bad "SKILL.md hardening prose"
 
 echo "----"
 [ "$fail" -eq 0 ] && echo "ALL PASS" || echo "FAILURES PRESENT"

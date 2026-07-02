@@ -13,8 +13,9 @@ Slug: **$ARGUMENTS**
 
 Read `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/SKILL.md` and follow **What one iteration does** for
 this slug, using the roles set in its plan. That starts with the step-0 quota gate (see
-`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`); when the gate trips, the
-iteration is the wrap-up landing, not new work. Do exactly one iteration, then stop. The timer
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`) and the step-0.5 guardrail gate (see
+`${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/guardrails.md`); when either gate trips, the
+iteration is a wrap-up or stall landing, not new work. Do exactly one iteration, then stop. The timer
 fires the next one.
 
 No human is here, so do not ask anything and do not do anything that needs a permission prompt. Work
