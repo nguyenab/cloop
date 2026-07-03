@@ -19,5 +19,5 @@ iteration is a wrap-up or stall landing, not new work. Do exactly one iteration,
 fires the next one.
 
 No human is here, so do not ask anything and do not do anything that needs a permission prompt. Work
-from the plan, the criteria, and the last ADR. If you truly cannot tell what to do, write that into
-the summary and stop.
+from the plan, the criteria, and the recent ADRs. If you truly cannot tell what to do, write that
+into the summary and stop.

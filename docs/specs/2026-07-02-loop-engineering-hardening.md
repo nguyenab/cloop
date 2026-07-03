@@ -183,6 +183,22 @@ importance tagging, MemGPT-style paging, task-budget API features, watchdog daem
 change that makes cloop an orchestration framework. The lean heuristics above capture most of the
 value of each; revisit only if the simple counters prove insufficient in use.
 
+## Amendments (post-verification, same day)
+
+A two-agent end-to-end exercise (a full loop lifecycle run literally from the docs in a scratch
+repo) surfaced ambiguities that could silently disable the breakers. Clarified:
+
+- A failed iteration still completes step 7 (increment `iteration`, set `last_adr`, update
+  counters) — otherwise `consecutive_qa_failures` never bumps and neither breaker can trip.
+- State's `iteration` counts completed iterations; guardrail checks read it at step 0.5, so the
+  fire in progress is `iteration + 1`. Re-anchor fires when that is a positive multiple of 5
+  (fires 5, 10, …, never the first). `last_progress_iteration` is written at step 7 as the
+  just-incremented value.
+- A landing (quota wrap-up or stall diagnosis) commits its ADR, sets `last_adr` to it, and leaves
+  `iteration` unchanged; its ADR uses `qa: n/a` and carries `iteration` as it stands in state.
+- `plan-template.md` explains the ledger-vs-`criteria_ref` distinction; `cloop-iterate.md` says
+  "recent ADRs"; the README file map lists the criteria ledger.
+
 ## Acceptance
 
 - `test/validate.sh` passes, including all new checks.

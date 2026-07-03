@@ -140,7 +140,9 @@ recent ADRs. If it genuinely cannot tell what to do, it writes that into the sum
 
 On a QA fail: fix it within the same iteration if you can. If you can't, revert this iteration's
 code change so the next fire starts from a working tree, but still write the ADR with `qa: fail`
-recording what broke and why, and commit that (plus any revert) so the trail stays intact. The next
+recording what broke and why, and commit that (plus any revert) so the trail stays intact. A failed
+iteration still completes step 7: increment `iteration`, set `last_adr` to the fail ADR, and update
+the counters per guardrails.md — otherwise the breakers can never trip. The next
 fire retries fresh with a narrower scope — it never patches the rejected attempt in place. Never
 hand a broken or half-finished working tree to the next fire.
 

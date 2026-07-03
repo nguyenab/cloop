@@ -27,3 +27,7 @@ sensible default; very short intervals burn tokens fast.
 
 A loop without a `check` command is only as reliable as LLM judgment; give it one when the project
 has tests.
+
+Completion is tracked by the criteria ledger at `.claude/cloop/criteria/<slug>.md`, written at
+setup — or by the first iteration, for a hand-written plan. `criteria_ref` is separate: an optional
+pointer to an external PRD or user-stories file, and it can stay null.

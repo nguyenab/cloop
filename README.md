@@ -87,6 +87,7 @@ goal, mode, interval, roles, and commit style, then run `/cloop:cloop-execute <n
 
 ```
 .claude/cloop/plans/<name>.md      your plan
+.claude/cloop/criteria/<name>.md   the criteria ledger
 .claude/cloop/adr/<name>/          one ADR per iteration
 .claude/cloop/<name>.state.json    progress, ignored by git
 ```

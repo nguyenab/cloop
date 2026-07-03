@@ -33,3 +33,6 @@ likely comes next>
 ## Links
 - files: <paths this iteration touched>
 ```
+
+A landing ADR (quota wrap-up or stall diagnosis) uses `qa: n/a` and carries `iteration` as it
+stands in state — a landing does not start a new iteration; only `NNNN` advances.

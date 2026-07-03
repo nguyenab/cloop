@@ -70,7 +70,8 @@ A wrap-up landing is one deliberately tiny iteration that leaves the loop parked
    when capacity returns. This is the iteration's ADR; commit it.
 3. Set state: `status: paused-quota`, `paused_reason` (e.g. `weekly at 92%`), `resume_at` = now
    plus the **binding window's** reset (`five_h_reset` or `weekly_reset`, whichever is binding)
-   plus a small buffer, and store the parsed readout in `last_quota`.
+   plus a small buffer, and store the parsed readout in `last_quota`. Set `last_adr` to the handoff
+   ADR; a landing is not a new iteration, so leave `iteration` unchanged.
 4. Pause honestly, by reset horizon:
    - **Binding reset within ~6h** (the 5h wall): `CronDelete` the fast timer and `CronCreate` a
      slow check-only heartbeat (~20m) whose prompt re-runs the iterate command for this slug;
