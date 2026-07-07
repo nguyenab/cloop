@@ -104,9 +104,10 @@ It runs unattended, so it never asks you anything. It works from the plan, the c
 recent ADRs. If it genuinely cannot tell what to do, it writes that into the summary and stops.
 
 0. Quota gate: run the check in `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`
-   (a cheap local call). If the binding window (the higher of 5h and weekly) is over the
-   threshold, run that file's wrap-up landing instead of a normal iteration. Empty output means
-   quota unknown: proceed normally.
+   (a cheap local call). ccs reports percent *remaining* (fuel gauge) per account; if the best
+   account's binding window (`pool_binding_pct`, the MIN of 5h and weekly) is below the floor,
+   run that file's wrap-up landing instead of a normal iteration. Empty output means quota
+   unknown: proceed normally.
 0.5 Guardrails: run the breaker, stall, re-anchor, and immutability rules in
    `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/guardrails.md`. If a breaker has tripped,
    run that file's stall landing instead of a normal iteration. Older loops without the counters
@@ -165,9 +166,10 @@ tells the story.
 ## Quota awareness
 
 cloop reads remaining Claude capacity from the `ccs` proxy before spending an iteration, gates
-each fire on the binding limit (5h or weekly, whichever is higher), and parks itself cleanly
-with a handoff ADR when capacity runs out — pausing honestly based on whether the reset is
-session-plausible. The check, the parse, the threshold, and the wrap-up landing are all in
+each fire on the binding limit (5h or weekly, whichever has the least fuel left) across the whole
+account pool, and parks itself cleanly with a handoff ADR when every account runs dry — pausing
+honestly based on whether the reset is session-plausible. The check, the parse, the floor, and the
+wrap-up landing are all in
 `${CLAUDE_PLUGIN_ROOT}/skills/cloop-engine/references/quota.md`. If `ccs` is absent the gate is
 a no-op and loops behave as before.
 
